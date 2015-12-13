@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.vip.test.exoplayerdemo.VG
+        android:layout_width="fill_parent"
+        android:layout_height="100dp"
+        android:background="#f00"
+        android:padding="10dp">
+        <View
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:background="@mipmap/ic_launcher"/>
+    </com.vip.test.exoplayerdemo.VG>
+
+    <VideoView
+        android:id="@+id/vv"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
