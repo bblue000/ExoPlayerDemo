@@ -1,1 +1,11 @@
 include ':app', ':videolib'
+
+
+include ':vsbase'
+
+
+// 指定android 公共SDK的项目路径
+def androidVipSDKProjectPath = '';//'/Users/mark/MyWork/GitHub/vip_sdk_develop/check_branch/';
+project(':vsbase').projectDir = new File(androidVipSDKProjectPath + 'vsbase')
+
+

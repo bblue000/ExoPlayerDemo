@@ -1,11 +1,20 @@
 package com.vip.sdk.videolib;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.VideoView;
+
+import java.util.Map;
 
 /**
  * 封装的小组件
@@ -19,37 +28,48 @@ import android.widget.VideoView;
 public class TinyVideo extends VideoView {
 
     /**
-     * 播放状态的回调
+     * 播放状态的回调。
+     *
+     * <br/>
+     *
+     * 如果已经开始播放，则在设置时将会调用{@link #onStart(TinyVideo)}。
      */
     public interface StateCallback {
         /**
-         * 资源已加载（全部或部分），已经可以播放
+         * 资源已加载（全部或部分），已经可以播放。
          */
-        void onPrepared();
+        void onPrepared(TinyVideo video);
 
         /**
          * 开始播放（从停止或者暂停状态变为播放状态）
          */
-        void onStart();
+        void onStart(TinyVideo video);
 
         /**
          * 由播放状态变为暂停状态
          */
-        void onPaused();
+        void onPaused(TinyVideo video);
 
         /**
          * 进入停止状态（已播放完成）
          */
-        void onStop();
+        void onStop(TinyVideo video);
+
+        /**
+         * 资源加载失败
+         */
+        void onLoadErr(TinyVideo video, LoadErrInfo status);
     }
 
     private MediaPlayer.OnCompletionListener mOnCompletionListener;
     private MediaPlayer.OnPreparedListener mOnPreparedListener;
     private MediaPlayer.OnErrorListener mOnErrorListener;
 
-    protected boolean mAutoPlay = false;
     protected float mSizeRatio = -1.0f;
-    protected TinyMediaOverlay mTinyMediaOverlay;
+    protected TinyController mTinyController;
+    protected StateCallback mStateCallback;
+    protected Uri mUri;
+    protected Map<String, String> mHeaders;
     public TinyVideo(Context context) {
         this(context, null);
     }
@@ -67,24 +87,50 @@ public class TinyVideo extends VideoView {
     protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TinyVideo, defStyleAttr, 0);
         mSizeRatio = a.getFloat(R.styleable.TinyVideo_sizeRatio, -1.0f);
-        mAutoPlay = a.getBoolean(R.styleable.TinyVideo_autoPlay, false);
         a.recycle();
 
-        setOnPreparedListener(mPreparedListener);
-        setOnErrorListener(mErrorListener);
-        setOnCompletionListener(mCompletionListener);
+        superSetOnPreparedListener(mPreparedListener);
+        superSetOnErrorListener(mErrorListener);
+        superSetOnCompletionListener(mCompletionListener);
+    }
+
+    @Override
+    public void setOnPreparedListener(MediaPlayer.OnPreparedListener l) {
+        mOnPreparedListener = l;
+    }
+
+    @Override
+    public void setOnErrorListener(MediaPlayer.OnErrorListener l) {
+        mOnErrorListener = l;
+    }
+
+    @Override
+    public void setOnCompletionListener(MediaPlayer.OnCompletionListener l) {
+        mOnCompletionListener = l;
+    }
+
+    /*package*/ void superSetOnPreparedListener(MediaPlayer.OnPreparedListener l) {
+        super.setOnPreparedListener(l);
+    }
+
+    /*package*/ void superSetOnErrorListener(MediaPlayer.OnErrorListener l) {
+        super.setOnErrorListener(l);
+    }
+
+    /*package*/ void superSetOnCompletionListener(MediaPlayer.OnCompletionListener l) {
+        super.setOnCompletionListener(l);
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        attachTinyController(mTinyController);
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-
-
+        detachTinyController(mTinyController);
     }
 
     @Override
@@ -115,6 +161,76 @@ public class TinyVideo extends VideoView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+    @Override
+    public void setVideoPath(String path) {
+        setVideoURI(Uri.parse(path));
+    }
+
+    @Override
+    public void setVideoURI(Uri uri) {
+        setVideoURI(uri, null);
+    }
+
+    @Override
+    public void setVideoURI(Uri uri, Map<String, String> headers) {
+        mUri = uri;
+        mHeaders = headers;
+        if (null != mTinyController) {
+            mTinyController.dispatchSetUri(this, uri, mHeaders);
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    /*package*/ void superSetVideoURI(Uri uri) {
+        if (null == mTinyController) {
+            throw new UnsupportedOperationException("non TinyController supplied");
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            super.setVideoURI(uri, null);
+        } else {
+            super.setVideoURI(uri);
+        }
+    }
+
+    /**
+     * 设置控制器
+     */
+    public void setTinyController(TinyController controller) {
+        if (mTinyController == controller) { // 如果是同一个对象，不进行处理
+            return;
+        }
+        detachTinyController(mTinyController);
+        mTinyController = controller;
+        attachTinyController(mTinyController);
+    }
+
+    private void attachTinyController(TinyController controller) {
+        if (null != controller) {
+            controller.dispatchAttachVideo(this);
+            if (null != mUri) {
+                controller.dispatchSetUri(this, mUri, mHeaders);
+            }
+        }
+    }
+
+    private void detachTinyController(TinyController controller) {
+        if (null != controller) {
+            controller.dispatchDetachVideo(this);
+        }
+    }
+
+    /**
+     * do nothing
+     */
+    @Override
+    public void start() {
+
+    }
+
+    /*package*/ void superStart() {
+        super.start();
+    }
+
     /**
      * 设置宽高比
      * @param ratio 宽高比例（宽:高）
@@ -136,51 +252,93 @@ public class TinyVideo extends VideoView {
     }
 
     /**
-     * 设置是否自动播放
+     * 设置状态回调
      */
-    public void setAutoPlay(boolean autoPlay) {
-        mAutoPlay = autoPlay;
-    }
-
-    /**
-     * 是否自动播放
-     */
-    public boolean isAutoPlay() {
-        return mAutoPlay;
-    }
-
-    /**
-     * 设置浮层
-     */
-    public void setTinyMediaOverlay(TinyMediaOverlay overlay) {
-        if (null != mTinyMediaOverlay) {
-            mTinyMediaOverlay.unbind(this);
-        }
-        mTinyMediaOverlay = overlay;
-        attachTinyMediaOverlay();
-    }
-
-    protected void attachTinyMediaOverlay() {
-        if (null != mTinyMediaOverlay) {
-            mTinyMediaOverlay.bind(this);
+    public void setStateCallback(StateCallback callback) {
+        mStateCallback = callback;
+        if (isPlaying()) {
+            checkAndSend(MSG_START, null);
         }
     }
 
-    /**
-     * 获取浮层
-     */
-    public TinyMediaOverlay getTinyMediaOverlay() {
-        return mTinyMediaOverlay;
+    private void checkAndSend(int msg, Object param) {
+        mHandler.sendEmptyMessage(msg);
     }
 
+    /*package*/ void dispatchError(LoadErrInfo info) {
+        checkAndSend(MSG_LOAEDEER, info);
+    }
+
+    private static final int MSG_PREPARED = 1;
+    private static final int MSG_START = 2;
+    private static final int MSG_PAUSE = 3;
+    private static final int MSG_STOP = 4;
+    private static final int MSG_LOAEDEER = 5;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_PREPARED:
+                    mInStateCallback.onPrepared(TinyVideo.this);
+                    break;
+                case MSG_START:
+                    mInStateCallback.onStart(TinyVideo.this);
+                    break;
+                case MSG_PAUSE:
+                    mInStateCallback.onPaused(TinyVideo.this);
+                    break;
+                case MSG_STOP:
+                    mInStateCallback.onStop(TinyVideo.this);
+                    break;
+                case MSG_LOAEDEER:
+                    mInStateCallback.onLoadErr(TinyVideo.this, (LoadErrInfo) msg.obj);
+                    break;
+            }
+        }
+    };
+
+    private StateCallback mInStateCallback = new StateCallback() {
+
+        @Override
+        public void onPrepared(TinyVideo video) {
+            if (null != mStateCallback) {
+                mStateCallback.onPrepared(video);
+            }
+        }
+
+        @Override
+        public void onStart(TinyVideo video) {
+            if (null != mStateCallback) {
+                mStateCallback.onStart(video);
+            }
+        }
+
+        @Override
+        public void onPaused(TinyVideo video) {
+            if (null != mStateCallback) {
+                mStateCallback.onPaused(video);
+            }
+        }
+
+        @Override
+        public void onStop(TinyVideo video) {
+            if (null != mStateCallback) {
+                mStateCallback.onStop(video);
+            }
+        }
+
+        @Override
+        public void onLoadErr(TinyVideo video, LoadErrInfo status) {
+            if (null != mStateCallback) {
+                mStateCallback.onLoadErr(video, status);
+            }
+        }
+    };
 
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
-            if (null != mTinyMediaOverlay) {
-                mTinyMediaOverlay.onPrepared();
-            }
-
+            checkAndSend(MSG_PREPARED, null);
             if (null != mOnPreparedListener) {
                 mOnPreparedListener.onPrepared(mp);
             }
@@ -189,9 +347,7 @@ public class TinyVideo extends VideoView {
     private MediaPlayer.OnCompletionListener mCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            if (null != mTinyMediaOverlay) {
-                mTinyMediaOverlay.onCompletion();
-            }
+            checkAndSend(MSG_STOP, null);
             if (null != mOnCompletionListener) {
                 mOnCompletionListener.onCompletion(mp);
             }
@@ -210,4 +366,45 @@ public class TinyVideo extends VideoView {
         }
     };
 
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        return super.onSaveInstanceState();
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        super.onRestoreInstanceState(state);
+    }
+
+    /**
+     * User interface state that is stored by TextView for implementing
+     * {@link View#onSaveInstanceState}.
+     */
+    public static class SavedState extends BaseSavedState {
+
+        SavedState(Parcelable superState) {
+            super(superState);
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+        }
+
+        public static final Parcelable.Creator<SavedState> CREATOR
+                = new Parcelable.Creator<SavedState>() {
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
+
+        private SavedState(Parcel in) {
+            super(in);
+        }
+    }
 }

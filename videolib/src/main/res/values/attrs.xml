@@ -4,8 +4,6 @@
     <declare-styleable name="TinyVideo">
         <!-- 视频宽高比，width:height；例如，宽为200，该值设置为2时，高为100（最好保证宽高中至少一项是绝对数值） -->
         <attr name="sizeRatio" format="float"/>
-        <!-- 是否自动播放 -->
-        <attr name="autoPlay" format="boolean"/>
     </declare-styleable>
     
 </resources>
