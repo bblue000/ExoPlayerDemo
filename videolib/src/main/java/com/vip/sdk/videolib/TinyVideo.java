@@ -61,6 +61,22 @@ public class TinyVideo extends VideoView {
         void onLoadErr(TinyVideo video, LoadErrInfo status);
     }
 
+    /**
+     * {@link com.vip.sdk.videolib.TinyVideo.StateCallback}的缺省子类，所有方法都是空实现
+     */
+    public static class SimpleStateCallback implements StateCallback {
+        @Override
+        public void onPrepared(TinyVideo video) { }
+        @Override
+        public void onStart(TinyVideo video) { }
+        @Override
+        public void onPaused(TinyVideo video) { }
+        @Override
+        public void onStop(TinyVideo video) { }
+        @Override
+        public void onLoadErr(TinyVideo video, LoadErrInfo status) { }
+    }
+
     private MediaPlayer.OnCompletionListener mOnCompletionListener;
     private MediaPlayer.OnPreparedListener mOnPreparedListener;
     private MediaPlayer.OnErrorListener mOnErrorListener;
@@ -70,6 +86,8 @@ public class TinyVideo extends VideoView {
     protected StateCallback mStateCallback;
     protected Uri mUri;
     protected Map<String, String> mHeaders;
+
+    protected boolean mAttachedToWindow;
     public TinyVideo(Context context) {
         this(context, null);
     }
@@ -109,6 +127,16 @@ public class TinyVideo extends VideoView {
         mOnCompletionListener = l;
     }
 
+    /**
+     * 设置状态回调
+     */
+    public void setStateCallback(StateCallback callback) {
+        mStateCallback = callback;
+        if (isPlaying()) {
+            checkAndSend(MSG_START, null);
+        }
+    }
+
     /*package*/ void superSetOnPreparedListener(MediaPlayer.OnPreparedListener l) {
         super.setOnPreparedListener(l);
     }
@@ -123,12 +151,14 @@ public class TinyVideo extends VideoView {
 
     @Override
     protected void onAttachedToWindow() {
+        mAttachedToWindow = true;
         super.onAttachedToWindow();
         attachTinyController(mTinyController);
     }
 
     @Override
     protected void onDetachedFromWindow() {
+        mAttachedToWindow = false;
         super.onDetachedFromWindow();
         detachTinyController(mTinyController);
     }
@@ -206,7 +236,9 @@ public class TinyVideo extends VideoView {
 
     private void attachTinyController(TinyController controller) {
         if (null != controller) {
-            controller.dispatchAttachVideo(this);
+            if (mAttachedToWindow) {
+                controller.dispatchAttachVideo(this);
+            }
             if (null != mUri) {
                 controller.dispatchSetUri(this, mUri, mHeaders);
             }
@@ -251,17 +283,12 @@ public class TinyVideo extends VideoView {
         return mSizeRatio;
     }
 
-    /**
-     * 设置状态回调
-     */
-    public void setStateCallback(StateCallback callback) {
-        mStateCallback = callback;
-        if (isPlaying()) {
-            checkAndSend(MSG_START, null);
-        }
-    }
-
     private void checkAndSend(int msg, Object param) {
+        if (null != param) {
+            Message message = Message.obtain(mHandler, msg);
+            message.obj = param;
+            mHandler.sendMessage(message);
+        }
         mHandler.sendEmptyMessage(msg);
     }
 
@@ -279,61 +306,34 @@ public class TinyVideo extends VideoView {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_PREPARED:
-                    mInStateCallback.onPrepared(TinyVideo.this);
+                    if (null != mStateCallback) {
+                        mStateCallback.onPrepared(TinyVideo.this);
+                    }
                     break;
                 case MSG_START:
-                    mInStateCallback.onStart(TinyVideo.this);
+                    if (null != mStateCallback) {
+                        mStateCallback.onStart(TinyVideo.this);
+                    }
                     break;
                 case MSG_PAUSE:
-                    mInStateCallback.onPaused(TinyVideo.this);
+                    if (null != mStateCallback) {
+                        mStateCallback.onPaused(TinyVideo.this);
+                    }
                     break;
                 case MSG_STOP:
-                    mInStateCallback.onStop(TinyVideo.this);
+                    if (null != mStateCallback) {
+                        mStateCallback.onStop(TinyVideo.this);
+                    }
                     break;
                 case MSG_LOAEDEER:
-                    mInStateCallback.onLoadErr(TinyVideo.this, (LoadErrInfo) msg.obj);
+                    if (null != mStateCallback) {
+                        mStateCallback.onLoadErr(TinyVideo.this, (LoadErrInfo) msg.obj);
+                    }
                     break;
             }
         }
     };
 
-    private StateCallback mInStateCallback = new StateCallback() {
-
-        @Override
-        public void onPrepared(TinyVideo video) {
-            if (null != mStateCallback) {
-                mStateCallback.onPrepared(video);
-            }
-        }
-
-        @Override
-        public void onStart(TinyVideo video) {
-            if (null != mStateCallback) {
-                mStateCallback.onStart(video);
-            }
-        }
-
-        @Override
-        public void onPaused(TinyVideo video) {
-            if (null != mStateCallback) {
-                mStateCallback.onPaused(video);
-            }
-        }
-
-        @Override
-        public void onStop(TinyVideo video) {
-            if (null != mStateCallback) {
-                mStateCallback.onStop(video);
-            }
-        }
-
-        @Override
-        public void onLoadErr(TinyVideo video, LoadErrInfo status) {
-            if (null != mStateCallback) {
-                mStateCallback.onLoadErr(video, status);
-            }
-        }
-    };
 
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
@@ -344,6 +344,7 @@ public class TinyVideo extends VideoView {
             }
         }
     };
+
     private MediaPlayer.OnCompletionListener mCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
@@ -353,6 +354,7 @@ public class TinyVideo extends VideoView {
             }
         }
     };
+    
     private MediaPlayer.OnErrorListener mErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {

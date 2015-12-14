@@ -2,7 +2,7 @@ package com.vip.sdk.videolib.download;
 
 import android.net.Uri;
 
-import com.vip.sdk.api.VipAPIStatus;
+import com.vip.sdk.videolib.LoadErrInfo;
 import com.vip.sdk.videolib.TinyVideoInfo;
 
 /**
@@ -46,7 +46,7 @@ public interface TinyDownloader {
          * @param info 视频信息
          * @param status 失败信息
          */
-        void onFailed(TinyVideoInfo info, String uri, VipAPIStatus status) ;
+        void onFailed(TinyVideoInfo info, String uri, LoadErrInfo status) ;
 
         /**
          * 取消下载时的回调

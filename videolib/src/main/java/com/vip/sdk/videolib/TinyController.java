@@ -2,7 +2,6 @@ package com.vip.sdk.videolib;
 
 import android.net.Uri;
 
-import com.vip.sdk.api.VipAPIStatus;
 import com.vip.sdk.videolib.autoplay.AutoPlayStrategy;
 import com.vip.sdk.videolib.autoplay.NetDependStrategy;
 import com.vip.sdk.videolib.download.SimpleTinyDownloader;
@@ -140,10 +139,10 @@ public class TinyController {
         }
     }
 
-    protected void dispatchOnDownloadFailed(TinyVideoInfo info, String uri, VipAPIStatus status) {
+    protected void dispatchOnDownloadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
         synchronized (mVideoInfoMap) {
             if (info.attached() && info.matchUri(uri)) {
-                info.video.dispatchError(new LoadErrInfo(status.getCode(), status.getMessage()));
+                info.video.dispatchError(status);
             }
         }
     }
@@ -159,7 +158,7 @@ public class TinyController {
         }
 
         @Override
-        public void onFailed(TinyVideoInfo info, String uri, VipAPIStatus status) {
+        public void onFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
             dispatchOnDownloadFailed(info, uri, status);
         }
 

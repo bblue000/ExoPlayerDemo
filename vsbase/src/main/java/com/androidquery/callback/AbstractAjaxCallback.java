@@ -1229,7 +1229,7 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
         return File.class.equals(type) || XmlPullParser.class.equals(type) || InputStream.class.equals(type) || XmlDom.class.equals(type);
     }
 
-    private File getPreFile() {
+    protected File getPreFile() {
 
         boolean pre = isStreamingContent();
 
@@ -1860,7 +1860,7 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
 
     }
 
-    private void copy(InputStream is, OutputStream os, int max, File tempFile, File destFile) throws IOException {
+    protected void copy(InputStream is, OutputStream os, int max, File tempFile, File destFile) throws IOException {
 
         //if no file operation is involved
         if (destFile == null) {
@@ -1895,7 +1895,7 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
 
     }
 
-    private File makeTempFile(File file) throws IOException {
+    protected File makeTempFile(File file) throws IOException {
 
         File temp = new File(file.getAbsolutePath() + ".tmp");
         temp.createNewFile();
