@@ -32,28 +32,28 @@ public class TinyVideo extends VideoView {
      *
      * <br/>
      *
-     * 如果已经开始播放，则在设置时将会调用{@link #onStart(TinyVideo)}。
+     * 如果已经开始播放，则在设置时将会调用{@link #STATE_START}。
      */
     public interface StateCallback {
+
         /**
          * 资源已加载（全部或部分），已经可以播放。
          */
-        void onPrepared(TinyVideo video);
-
+        int STATE_PREPARED = 1;
         /**
          * 开始播放（从停止或者暂停状态变为播放状态）
          */
-        void onStart(TinyVideo video);
-
+        int STATE_START = 2;
         /**
          * 由播放状态变为暂停状态
          */
-        void onPaused(TinyVideo video);
-
+        int STATE_PAUSE = 3;
         /**
          * 进入停止状态（已播放完成）
          */
-        void onStop(TinyVideo video);
+        int STATE_STOP = 4;
+
+        void onStateChanged(TinyVideo video, int state);
 
         /**
          * 资源加载失败
@@ -65,16 +65,8 @@ public class TinyVideo extends VideoView {
      * {@link com.vip.sdk.videolib.TinyVideo.StateCallback}的缺省子类，所有方法都是空实现
      */
     public static class SimpleStateCallback implements StateCallback {
-        @Override
-        public void onPrepared(TinyVideo video) { }
-        @Override
-        public void onStart(TinyVideo video) { }
-        @Override
-        public void onPaused(TinyVideo video) { }
-        @Override
-        public void onStop(TinyVideo video) { }
-        @Override
-        public void onLoadErr(TinyVideo video, LoadErrInfo status) { }
+        @Override public void onStateChanged(TinyVideo video, int state) { }
+        @Override public void onLoadErr(TinyVideo video, LoadErrInfo status) { }
     }
 
     private MediaPlayer.OnCompletionListener mOnCompletionListener;
@@ -191,16 +183,38 @@ public class TinyVideo extends VideoView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <br/>
+     *
+     * 将转发给控制器进行处理，此时并未准备播放
+     */
     @Override
     public void setVideoPath(String path) {
         setVideoURI(Uri.parse(path));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <br/>
+     *
+     * 将转发给控制器进行处理，此时并未准备播放
+     */
     @Override
     public void setVideoURI(Uri uri) {
         setVideoURI(uri, null);
     }
 
+
+    /**
+     * {@inheritDoc}
+     *
+     * <br/>
+     *
+     * 将转发给控制器进行处理，此时并未准备播放
+     */
     @Override
     public void setVideoURI(Uri uri, Map<String, String> headers) {
         mUri = uri;
@@ -210,8 +224,12 @@ public class TinyVideo extends VideoView {
         }
     }
 
+    public Uri getVideoUri() {
+        return mUri;
+    }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    /*package*/ void superSetVideoURI(Uri uri) {
+    public void superSetVideoURI(Uri uri) {
         if (null == mTinyController) {
             throw new UnsupportedOperationException("non TinyController supplied");
         }
@@ -259,8 +277,29 @@ public class TinyVideo extends VideoView {
 
     }
 
-    /*package*/ void superStart() {
+    public void superStart() {
         super.start();
+    }
+
+    @Override
+    public void pause() {
+        boolean isPlaying = isPlaying();
+        super.pause();
+        if (isPlaying ^ isPlaying()) {
+            checkAndSend(MSG_PAUSE, null);
+        }
+    }
+
+    @Override
+    public void suspend() {
+        super.suspend();
+        checkAndSend(MSG_STOP, null);
+    }
+
+    @Override
+    public void stopPlayback() {
+        super.stopPlayback();
+        checkAndSend(MSG_STOP, null);
     }
 
     /**
@@ -293,39 +332,39 @@ public class TinyVideo extends VideoView {
     }
 
     /*package*/ void dispatchError(LoadErrInfo info) {
-        checkAndSend(MSG_LOAEDEER, info);
+        checkAndSend(MSG_LOADEER, info);
     }
 
     private static final int MSG_PREPARED = 1;
     private static final int MSG_START = 2;
     private static final int MSG_PAUSE = 3;
     private static final int MSG_STOP = 4;
-    private static final int MSG_LOAEDEER = 5;
+    private static final int MSG_LOADEER = 5;
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_PREPARED:
                     if (null != mStateCallback) {
-                        mStateCallback.onPrepared(TinyVideo.this);
+                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_PREPARED);
                     }
                     break;
                 case MSG_START:
                     if (null != mStateCallback) {
-                        mStateCallback.onStart(TinyVideo.this);
+                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_START);
                     }
                     break;
                 case MSG_PAUSE:
                     if (null != mStateCallback) {
-                        mStateCallback.onPaused(TinyVideo.this);
+                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_PAUSE);
                     }
                     break;
                 case MSG_STOP:
                     if (null != mStateCallback) {
-                        mStateCallback.onStop(TinyVideo.this);
+                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_STOP);
                     }
                     break;
-                case MSG_LOAEDEER:
+                case MSG_LOADEER:
                     if (null != mStateCallback) {
                         mStateCallback.onLoadErr(TinyVideo.this, (LoadErrInfo) msg.obj);
                     }
@@ -333,7 +372,6 @@ public class TinyVideo extends VideoView {
             }
         }
     };
-
 
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override

@@ -25,6 +25,8 @@ public class TinyVideoInfo {
 
     public Map<String, String> headers;
 
+    public Uri playUri;
+
     /**
      * 视频组件{@link TinyVideo}
      */
@@ -40,16 +42,32 @@ public class TinyVideoInfo {
         this.video = video;
     }
 
-    public synchronized boolean matchUri(Uri uri) {
+    public boolean matchUri(Uri uri) {
         return ObjectUtils.equals(this.uri, uri);
     }
 
-    public synchronized boolean matchUri(String uri) {
+    public boolean matchUri(String uri) {
         return ObjectUtils.equals(String.valueOf(this.uri), uri);
+    }
+
+    public boolean matchPlayUri(Uri uri) {
+        return ObjectUtils.equals(this.playUri, uri);
+    }
+
+    public boolean matchPlayUri(String uri) {
+        return ObjectUtils.equals(String.valueOf(this.playUri), uri);
     }
 
     public boolean attached() {
         return controller.isVideoAttached(this);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof TinyVideoInfo)) {
+            return false;
+        }
+        TinyVideoInfo another = (TinyVideoInfo) o;
+        return ObjectUtils.equals(this.video, another.video);
+    }
 }

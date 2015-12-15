@@ -26,4 +26,5 @@ dependencies {
     //    compile 'com.google.android.exoplayer:exoplayer:r1.5.2'
     compile 'com.squareup.okhttp:okhttp:2.0.0'
     compile project(':videolib')
+    compile 'com.jakewharton:butterknife:5.1.1'
 }

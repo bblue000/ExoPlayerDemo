@@ -1804,7 +1804,7 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
                 } else {
                     //file.createNewFile();
                     tempFile = makeTempFile(file);
-                    os = new BufferedOutputStream(new FileOutputStream(tempFile));
+                    os = makeTempFileOutput(tempFile);
                 }
 
                 is = entity.getContent();
@@ -1902,6 +1902,10 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
 
         return temp;
 
+    }
+
+    protected OutputStream makeTempFileOutput(File tempFile) throws IOException {
+        return new BufferedOutputStream(new FileOutputStream(tempFile));
     }
 
     private void copy(InputStream is, OutputStream os, int max) throws IOException {

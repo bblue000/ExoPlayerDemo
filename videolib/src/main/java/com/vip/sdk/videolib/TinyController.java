@@ -1,6 +1,7 @@
 package com.vip.sdk.videolib;
 
 import android.net.Uri;
+import android.view.ViewGroup;
 
 import com.vip.sdk.videolib.autoplay.AutoPlayStrategy;
 import com.vip.sdk.videolib.autoplay.NetDependStrategy;
@@ -20,22 +21,18 @@ import java.util.Map;
  *
  * @since 1.0
  */
-public class TinyController {
+public abstract class TinyController {
 
     private AutoPlayStrategy mAutoPlayStrategy;
     private TinyDownloader mTinyDownloader;
-    private LinkedHashMap<TinyVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<TinyVideo, TinyVideoInfo>();
-    /**
-     * 创建一个新的对象
-     */
-    public static TinyController create() {
-        return new TinyController();
-    }
+    protected LinkedHashMap<TinyVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<TinyVideo, TinyVideoInfo>();
 
     protected TinyController() {
-
     }
 
+    // =============================================
+    // 外部设置
+    // =============================================
     /**
      * 设置自动播放策略，默认为{@link NetDependStrategy}。
      */
@@ -45,12 +42,23 @@ public class TinyController {
     }
 
     /**
-     * 设置下载器，默认为{@link NetDependStrategy}。
+     * 设置下载器，默认为{@link SimpleTinyDownloader}。
      */
     public TinyController downloader(TinyDownloader downloader) {
         mTinyDownloader = downloader;
         return this;
     }
+    // end
+
+    /**
+     * 根据播放策略等，决定播放项
+     */
+    public abstract void determinePlay() ;
+
+    /**
+     * 获取容器控件对象
+     */
+    public abstract ViewGroup getContainer();
 
     /**
      * 销毁中间数据，一般是在界面关闭时调用
@@ -61,27 +69,62 @@ public class TinyController {
         }
     }
 
+    /**
+     * 视频缓存好时调用
+     */
+    protected abstract void onVideoPrepared(TinyVideoInfo videoInfo) ;
+
+    protected void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
+        info.video.dispatchError(status);
+    }
+
+    /**
+     * 决定是否需要下载
+     */
+    protected boolean determineDownload(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
+        if (null != info) {
+            synchronized (info) {
+                if (!info.matchUri(uri)) {
+                    info.uri = uri;
+                    info.playUri = null;
+                    info.headers = headers;
+                    getTinyDownloader().download(info, mTinyDownloadCallback);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     // internal
     protected AutoPlayStrategy getAutoPlayStrategy() {
         if (null == mAutoPlayStrategy) {
             synchronized (this) {
                 if (null == mAutoPlayStrategy) { // 使用默认的
-                    mAutoPlayStrategy = new NetDependStrategy();
+                    mAutoPlayStrategy = createDefaultAutoPlayStrategy();
                 }
             }
         }
         return mAutoPlayStrategy;
     }
 
+    protected AutoPlayStrategy createDefaultAutoPlayStrategy() {
+        return new NetDependStrategy();
+    }
+
     protected TinyDownloader getTinyDownloader() {
         if (null == mTinyDownloader) {
             synchronized (this) {
                 if (null == mTinyDownloader) { // 使用默认的
-                    mTinyDownloader = new SimpleTinyDownloader();
+                    mTinyDownloader = createDefaultDownloader();
                 }
             }
         }
         return mTinyDownloader;
+    }
+
+    protected TinyDownloader createDefaultDownloader() {
+        return new SimpleTinyDownloader();
     }
 
     // 转发来自TinyVideo的操作，确保形成闭环
@@ -111,13 +154,7 @@ public class TinyController {
         synchronized (mVideoInfoMap) {
             info = mVideoInfoMap.get(video);
         }
-        if (null != info) {
-            synchronized (info) {
-                info.uri = uri;
-                info.headers = headers;
-            }
-            getTinyDownloader().download(info, mTinyDownloadCallback);
-        }
+        determineDownload(info, uri, headers);
     }
 
     /**
@@ -130,19 +167,18 @@ public class TinyController {
     }
 
     protected void dispatchOnDownloadSuccess(TinyVideoInfo info, String uri, Uri target) {
-        synchronized (mVideoInfoMap) {
-            if (info.attached() && info.matchUri(uri) && null != target) {
-                // play
-                info.video.superSetVideoURI(target);
-                info.video.superStart();
+        synchronized (info) {
+            if (info.attached() && info.matchUri(uri)) {
+                info.playUri = target;
+                onVideoPrepared(info);
             }
         }
     }
 
     protected void dispatchOnDownloadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
-        synchronized (mVideoInfoMap) {
+        synchronized (info) {
             if (info.attached() && info.matchUri(uri)) {
-                info.video.dispatchError(status);
+                onVideoLoadFailed(info, uri, status);
             }
         }
     }
@@ -151,7 +187,13 @@ public class TinyController {
         dispatchOnDownloadSuccess(info, uri, target);
     }
 
-    private TinyDownloader.TinyDownloadCallback mTinyDownloadCallback = new TinyDownloader.TinyDownloadCallback() {
+    protected TinyDownloader.TinyDownloadCallback mTinyDownloadCallback = new TinyDownloader.TinyDownloadCallback() {
+
+        @Override
+        public void onProgress(TinyVideoInfo info, String uri, long current, long total) {
+
+        }
+
         @Override
         public void onSuccess(TinyVideoInfo info, String uri, Uri target) {
             dispatchOnDownloadSuccess(info, uri, target);
