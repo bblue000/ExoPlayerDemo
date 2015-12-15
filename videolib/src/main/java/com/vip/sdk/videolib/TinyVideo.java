@@ -204,9 +204,8 @@ public class TinyVideo extends VideoView {
      */
     @Override
     public void setVideoURI(Uri uri) {
-        setVideoURI(uri, null);
+        setVideoURICompat(uri, null);
     }
-
 
     /**
      * {@inheritDoc}
@@ -215,8 +214,7 @@ public class TinyVideo extends VideoView {
      *
      * 将转发给控制器进行处理，此时并未准备播放
      */
-    @Override
-    public void setVideoURI(Uri uri, Map<String, String> headers) {
+    public void setVideoURICompat(Uri uri, Map<String, String> headers) {
         mUri = uri;
         mHeaders = headers;
         if (null != mTinyController) {

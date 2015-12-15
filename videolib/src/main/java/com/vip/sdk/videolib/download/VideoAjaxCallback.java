@@ -2,6 +2,8 @@ package com.vip.sdk.videolib.download;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Environment;
+import android.util.Log;
 
 import com.androidquery.callback.AbstractAjaxCallback;
 import com.androidquery.callback.AjaxStatus;
@@ -38,6 +40,8 @@ import java.util.WeakHashMap;
  */
 public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallback> {
 
+    private static final boolean DEBUG = true;
+
     private static HashMap<String, WeakHashMap<TinyVideoInfo, TinyDownloader.TinyDownloadCallback>> queueMap
             = new HashMap<String, WeakHashMap<TinyVideoInfo, TinyDownloader.TinyDownloadCallback>>(4);
 
@@ -49,7 +53,8 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
      */
     public static File getVideoCacheDir(Context context){
         if (null == CACHE_DIR) {
-            CACHE_DIR = new File(AQUtility.getCacheDir(context), "video");
+            File ext = Environment.getExternalStorageDirectory(); //AQUtility.getCacheDir(context)
+            CACHE_DIR = new File(ext, "aquery/video");
             if (!CACHE_DIR.exists()) {
                 CACHE_DIR.mkdirs();
             }
@@ -78,6 +83,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         String url = String.valueOf(tinyVideoInfo.uri);
         synchronized (queueMap) {
             String oldUrl = videoMap.get(tinyVideoInfo);
+            if (DEBUG) Log.w("yytest" , "old url = " + oldUrl);
             if (!ObjectUtils.equals(oldUrl, url)) { // 如果url改变了
                 Map<?, ?> urlVideoMap = queueMap.get(oldUrl);
                 if (null != urlVideoMap) {
@@ -107,10 +113,12 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         WeakHashMap<TinyVideoInfo, TinyDownloader.TinyDownloadCallback> vs = queueMap.get(url);
         if (vs == null) {
             if (queueMap.containsKey(url)) { // 如果有其他的相同请求过来，加入map中
+                if (DEBUG) Log.e("yytest" , "count + 1, url = " + url);
                 vs = new WeakHashMap<TinyVideoInfo, TinyDownloader.TinyDownloadCallback>();
                 vs.put(tinyVideoInfo, callback);
                 queueMap.put(url, vs);
             } else {
+                if (DEBUG) Log.e("yytest" , "first one, url = " + url);
                 // 仅仅注册这个url，说明已经有下载队列了
                 queueMap.put(url, null);
             }
@@ -170,16 +178,22 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
 
     @Override
     public void async(Context context) {
+        if (DEBUG) Log.d("yytest" , "pending load = " + getUrl());
+
         mTargetFile = AQUtility.getCacheFile(getVideoCacheDir(context), getUrl());
+
+        if (DEBUG) Log.d("yytest" , "target file ? " + mTargetFile.exists() + ", " + mTargetFile);
         mTempFile = new File(mTargetFile + ".tmp");
-        targetFile(mTargetFile);
+        if (DEBUG) Log.d("yytest" , "temp file ? " + mTempFile.exists() + ", " + mTempFile);
+        targetFile(mTargetFile).fileCache(true);
         if (FileManagerUtils.exists(mTempFile)) {
             // 临时文件仍存在，删除目标文件
             FileManagerUtils.deleteFile(mTargetFile, true);
 
             // 如果临时文件仍存在，则加入断点续传的字段
-            long size = mTargetFile.length();
+            long size = mTempFile.length();
             header("Range", "bytes=" + size + "-");
+            if (DEBUG) Log.d("yytest" , "temp file size = " + size);
         }
 
         TinyVideoInfo info = mTinyVideoInfo.get();
@@ -191,8 +205,16 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
     }
 
     @Override
+    protected File accessFile(File cacheDir, String url) {
+        if (FileManagerUtils.exists(mTargetFile) && mTargetFile.length() > 0) {
+            return mTargetFile;
+        }
+        return null;
+    }
+
+    @Override
     protected File makeTempFile(File file) throws IOException {
-        if (!mTargetFile.exists()) {
+        if (!mTempFile.exists()) {
             mTempFile.createNewFile();
         }
         return mTempFile;
@@ -211,6 +233,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
                 }
             }
         }
+        if (DEBUG) Log.d("yytest" , "makeTempFileOutput isBreakPointSupport = " + isBreakPointSupport);
         return new BufferedOutputStream(new FileOutputStream(tempFile, isBreakPointSupport));
     }
 
@@ -232,7 +255,9 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
                     lastSlot = readCount;
                     // 进行一次检测，如果
 
+                    if (DEBUG) Log.d("yytest" , "检测....");
                     if (!checkNeedGoon(getUrl(), mTinyVideoInfo.get())) {
+                        if (DEBUG) Log.w("yytest" , "检测 cancel = " + getUrl());
                         return ; // 如果没有等待当前url下载结果的项了，则直接返回，不再下载
                     }
                 }
@@ -254,6 +279,8 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
 
     @Override
     public void callback(String url, File object, AjaxStatus status) {
+        if (DEBUG) Log.d("yytest" , "callback result = " + object);
+
         TinyVideoInfo myInfo = mTinyVideoInfo.get();
 
         synchronized (queueMap) {
@@ -284,6 +311,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
                          File target, AjaxStatus status) {
         if (info == null || cb == null) return;
 
+        if (DEBUG) Log.d("yytest" , "checkCb matchUri = " + info.matchUri(url));
         if (info.matchUri(url)) {
             if (null != target) {
                 cb.onSuccess(info, url, Uri.fromFile(target));

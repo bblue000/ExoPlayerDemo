@@ -12,9 +12,9 @@ package com.vip.sdk.videolib;
  */
 public class LoadErrInfo {
 
-    public int code;
+    public final int code;
 
-    public String message;
+    public final String message;
 
     public LoadErrInfo(int code, String message) {
         this.code = code;
