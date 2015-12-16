@@ -40,7 +40,7 @@ public class Test extends Activity {
 
         vv = (VideoView) findViewById(R.id.vv);
 
-        final File file = new File(Environment.getExternalStorageDirectory(), "yytest.mp4");
+        final File file = new File(Environment.getExternalStorageDirectory(), "yytest");
 //        vv.setVideoURI(Uri.fromFile(file));
 //        vv.start();
 
@@ -71,9 +71,9 @@ public class Test extends Activity {
                             file.createNewFile();
                         }
                         FileOutputStream out = new FileOutputStream(file);
-                        byte[] buf = new byte[2048];
+                        byte[] buf = new byte[4096];
                         int times = 0;
-                        while (times <= 200) {
+                        while (times <= Integer.MAX_VALUE) {
                             int len = ins.read(buf);
                             if (len == -1) {
                                 break;

@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.vip.sdk.base.utils.ToastUtils;
 import com.vip.sdk.videolib.LoadErrInfo;
@@ -28,7 +30,7 @@ import butterknife.InjectView;
  */
 public class VideoListActivity extends Activity {
 
-    public static final String IP = "192.168.1.105"; // 10.101.54.106
+    public static final String IP = "10.101.54.106"; // 10.101.54.106 // 192.168.1.105
 
     @InjectView(R.id.list)
     ListView list;
@@ -37,14 +39,21 @@ public class VideoListActivity extends Activity {
         "http://" + IP + "/public/vip2.mp4",
         "http://" + IP + "/public/vip3.mp4",
         "http://" + IP + "/public/vip4.mp4",
-
         "http://" + IP + "/public/vip5.mp4",
         "http://" + IP + "/public/vip6.mp4",
         "http://" + IP + "/public/vip7.mp4",
         "http://" + IP + "/public/vip8.mp4",
         "http://" + IP + "/public/vip9.mp4",
         "http://" + IP + "/public/vip10.mp4",
+        "http://" + IP + "/public/vip11.mp4",
+        "http://" + IP + "/public/vip12.mp4",
+        "http://" + IP + "/public/vip13.mp4",
+        "http://" + IP + "/public/vip14.mp4",
+        "http://" + IP + "/public/vip15.mp4",
+        "http://" + IP + "/public/vip16.mp4",
     };
+
+    private TinyListController controller;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +64,7 @@ public class VideoListActivity extends Activity {
 
         list = (ListView) findViewById(R.id.list);
 
-        final TinyListController controller = new TinyListController(list);
+        controller = new TinyListController(list);
 
         list.setAdapter(new BaseAdapter() {
             @Override
@@ -74,19 +83,24 @@ public class VideoListActivity extends Activity {
             }
 
             @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
+            public View getView(final int position, View convertView, ViewGroup parent) {
                 if (null == convertView) {
                     convertView = getLayoutInflater().inflate(R.layout.video_list_item, parent, false);
                     convertView.setTag(new ViewHolder(convertView));
                 }
                 final ViewHolder holder = (ViewHolder) convertView.getTag();
-                holder.video.setTinyController(controller);
-                holder.video.setVideoPath(getItem(position));
+
+                String url = getItem(position);
+
+                holder.index_tv.setText(url.substring(url.lastIndexOf('/')));
+
+//                holder.video.setTinyController(controller);
+//                holder.video.setVideoPath(url);
 
                 holder.video.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                     @Override
                     public boolean onError(MediaPlayer mp, int what, int extra) {
-                        Log.e("yytest" , "err {" + what + ", " + extra + "}");
+                        Log.e("yytest", "err {" + what + ", " + extra + "}");
                         return true;
                     }
                 });
@@ -107,13 +121,26 @@ public class VideoListActivity extends Activity {
                         }
                     }
                 });
+
+                holder.btn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ToastUtils.showToast(String.valueOf(position + 1));
+                    }
+                });
                 return convertView;
             }
-
-
         });
 
         list.setOnScrollListener(controller);
+
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ToastUtils.showToast("list " + String.valueOf(position + 1));
+            }
+        });
+
         controller.tinyListCallback(new TinyListController.TinyListCallback() {
             @Override
             public TinyVideo getTinyVideo(int position, View convertView) {
@@ -125,11 +152,22 @@ public class VideoListActivity extends Activity {
     class ViewHolder {
         TinyVideo video;
         ImageView play_iv;
+        TextView index_tv;
+        View btn;
 
         public ViewHolder(View convertView) {
             video = (TinyVideo) convertView.findViewById(R.id.video);
             play_iv = (ImageView) convertView.findViewById(R.id.overlay_play_iv);
+            index_tv = (TextView) convertView.findViewById(R.id.index_tv);
+            btn = convertView.findViewById(R.id.btn);
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (null != controller) {
+            controller.destroy();
+        }
+    }
 }

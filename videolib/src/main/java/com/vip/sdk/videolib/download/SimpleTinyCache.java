@@ -12,10 +12,10 @@ import com.vip.sdk.videolib.TinyVideoInfo;
  *
  * @since 1.0
  */
-public class SimpleTinyDownloader implements TinyDownloader {
+public class SimpleTinyCache implements TinyCache {
 
     @Override
-    public void download(final TinyVideoInfo tinyVideoInfo, final TinyDownloadCallback callback) {
+    public void load(final TinyVideoInfo tinyVideoInfo, final TinyCacheCallback callback) {
         VideoAjaxCallback.download(tinyVideoInfo, callback);
     }
 

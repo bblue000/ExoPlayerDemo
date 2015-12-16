@@ -325,8 +325,9 @@ public class TinyVideo extends VideoView {
             Message message = Message.obtain(mHandler, msg);
             message.obj = param;
             mHandler.sendMessage(message);
+        } else {
+            mHandler.sendEmptyMessage(msg);
         }
-        mHandler.sendEmptyMessage(msg);
     }
 
     /*package*/ void dispatchError(LoadErrInfo info) {

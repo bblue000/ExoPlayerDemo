@@ -1,14 +1,14 @@
 package com.vip.sdk.videolib;
 
 import android.graphics.Rect;
+import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
 
-import com.vip.sdk.videolib.autoplay.AutoPlayStrategy;
-import com.vip.sdk.videolib.autoplay.MultiDependStrategy;
-import com.vip.sdk.videolib.autoplay.NetDependStrategy;
+import java.util.Map;
 
 /**
  * 列表播放，同时最多只有一个播放。
@@ -32,6 +32,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     private TinyListCallback mTinyListCallback;
     // 正在播放的项
     private TinyVideoInfo mPlaying;
+    protected boolean mIsFling;
     public TinyListController(ListView view) {
         mListView = view;
     }
@@ -39,14 +40,24 @@ public class TinyListController extends TinyController implements AbsListView.On
     // 可以直接设置当前对象作为ListView的OnScrollListener，
     // 也可以调用dispatchXXX方法转发外部的OnScrollListener
     public void dispatchOnScrollStateChanged(AbsListView view, int scrollState) {
-        if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-            determinePlay();
+        if (DEBUG) Log.d("yytest", "dispatch scroll....");
+        mIsFling = false;
+        switch (scrollState) {
+            case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
+                determinePlay();
+                break;
+            case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
+                break;
+            case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
+                if (DEBUG) Log.d("yytest", "fling....");
+                mIsFling = (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING);
+                break;
         }
     }
 
     public void dispatchOnScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
                          int totalItemCount) {
-
+        if (DEBUG) Log.d("yytest", "dispatch scroll....");
     }
 
     @Override
@@ -82,17 +93,17 @@ public class TinyListController extends TinyController implements AbsListView.On
 
         mPlaying = newToPlay;
 
-        if (null != newToPlay) {
-            if (newToPlay == oldPlaying) {
-                // 如果两次一样
-
-            } else {
-                stopPrevious(oldPlaying);
-            }
-            playCurrent(newToPlay);
-        } else {
-            stopPrevious(oldPlaying);
-        }
+//        if (null != newToPlay) {
+//            if (newToPlay == oldPlaying) {
+//                // 如果两次一样
+//
+//            } else {
+//                stopPrevious(oldPlaying);
+//            }
+//            playCurrent(newToPlay);
+//        } else {
+//            stopPrevious(oldPlaying);
+//        }
     }
 
     protected Rect mTempRect = new Rect();
@@ -118,6 +129,7 @@ public class TinyListController extends TinyController implements AbsListView.On
 
             TinyVideo video = mTinyListCallback.getTinyVideo(firstItemPos + i, child);
             if (null != video) {
+                if (DEBUG) Log.w("yytest", "当前播放的项：" + (firstItemPos + i + 1));
                 return video;
             }
         }
@@ -135,7 +147,7 @@ public class TinyListController extends TinyController implements AbsListView.On
             }
         }
         // 否则，去下载
-        if (determineDownload(current, current.uri, current.headers)) {
+        if (determineLoad(current, current.uri, current.headers)) {
             onVideoPrepared(current);
         }
     }
@@ -152,6 +164,15 @@ public class TinyListController extends TinyController implements AbsListView.On
     }
 
     @Override
+    protected boolean determineLoad(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
+        if (mIsFling) { // 如果快速滑动，则不下载
+//            if (DEBUG) Log.d("yytest", "fling....不下载");
+            return false;
+        }
+        return super.determineLoad(info, uri, headers);
+    }
+
+    @Override
     protected void onVideoPrepared(TinyVideoInfo videoInfo) {
         if (null == mPlaying) {
             determinePlay();
@@ -164,6 +185,11 @@ public class TinyListController extends TinyController implements AbsListView.On
                 // 如果不是当前播放的，不需要作任何处理
             }
         }
+    }
+
+    @Override
+    protected void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
+
     }
 
 }

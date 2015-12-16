@@ -15,12 +15,12 @@ import com.vip.sdk.videolib.TinyVideoInfo;
  *
  * @since 1.0
  */
-public interface TinyDownloader {
+public interface TinyCache {
 
     /**
      * 根据视频信息下载视频
      */
-    void download(TinyVideoInfo video, TinyDownloadCallback callback);
+    void load(TinyVideoInfo video, TinyCacheCallback callback);
 
     /**
      *
@@ -32,7 +32,7 @@ public interface TinyDownloader {
      *
      * @since 1.0
      */
-    interface TinyDownloadCallback {
+    interface TinyCacheCallback {
 
         /**
          * 下载进度的回调
@@ -56,23 +56,15 @@ public interface TinyDownloader {
          */
         void onFailed(TinyVideoInfo info, String uri, LoadErrInfo status) ;
 
-        /**
-         * 取消下载时的回调
-         * @param info 视频信息
-         * @param target 如果已经下载成功，则也返回目标文件
-         */
-        void onCanceled(TinyVideoInfo info, String uri, Uri target);
-
     }
 
     /**
-     * {@link com.vip.sdk.videolib.download.TinyDownloader.TinyDownloadCallback}的缺省实现，
+     * {@link TinyCacheCallback}的缺省实现，
      * 所有方法都是默认空实现
      */
-    class SimpleTinyDownloadCallback implements TinyDownloadCallback {
+    class SimpleTinyCacheCallback implements TinyCacheCallback {
         @Override public void onProgress(TinyVideoInfo info, String uri, long current, long total) { }
         @Override public void onSuccess(TinyVideoInfo info, String uri, Uri target) { }
         @Override public void onFailed(TinyVideoInfo info, String uri, LoadErrInfo status) { }
-        @Override public void onCanceled(TinyVideoInfo info, String uri, Uri target) { }
     }
 }

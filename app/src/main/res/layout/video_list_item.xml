@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="200dp"
     android:background="#333">
 
@@ -17,5 +18,23 @@
         android:layout_centerInParent="true"
         android:src="@android:drawable/ic_media_play"
         />
+
+    <TextView
+        android:id="@+id/index_tv"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:padding="5dp"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:text="1"/>
+
+    <Button
+        android:id="@+id/btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:text="click me!"/>
 
 </RelativeLayout>

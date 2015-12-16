@@ -60,6 +60,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -1804,7 +1805,7 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
                 } else {
                     //file.createNewFile();
                     tempFile = makeTempFile(file);
-                    os = makeTempFileOutput(tempFile);
+                    os = makeTempFileOutput(tempFile, client, hr, response);
                 }
 
                 is = entity.getContent();
@@ -1819,7 +1820,7 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
 
                 //AQUtility.debug("gzip response", entity.getContentEncoding());
 
-                copy(is, os, contentLength, tempFile, file);
+                copy(is, os, contentLength, tempFile, file, client, hr, response);
 
                 //os.flush();
 
@@ -1860,7 +1861,8 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
 
     }
 
-    protected void copy(InputStream is, OutputStream os, int max, File tempFile, File destFile) throws IOException {
+    protected void copy(InputStream is, OutputStream os, int max, File tempFile, File destFile,
+                        HttpClient client, HttpUriRequest hr, HttpResponse response) throws IOException {
 
         //if no file operation is involved
         if (destFile == null) {
@@ -1904,7 +1906,7 @@ public abstract class AbstractAjaxCallback<T, K> implements Runnable {
 
     }
 
-    protected OutputStream makeTempFileOutput(File tempFile) throws IOException {
+    protected OutputStream makeTempFileOutput(File tempFile, HttpClient client, HttpUriRequest hr, HttpResponse response) throws IOException {
         return new BufferedOutputStream(new FileOutputStream(tempFile));
     }
 
