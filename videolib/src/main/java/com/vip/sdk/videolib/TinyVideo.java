@@ -330,7 +330,7 @@ public class TinyVideo extends VideoView {
         }
     }
 
-    /*package*/ void dispatchError(LoadErrInfo info) {
+    /*package*/ void dispatchLoadErr(LoadErrInfo info) {
         checkAndSend(MSG_LOADEER, info);
     }
 

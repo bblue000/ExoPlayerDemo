@@ -30,7 +30,7 @@ import butterknife.InjectView;
  */
 public class VideoListActivity extends Activity {
 
-    public static final String IP = "10.101.54.106"; // 10.101.54.106 // 192.168.1.105
+    public static final String IP = "192.168.1.105"; // 10.101.54.106 // 192.168.1.105
 
     @InjectView(R.id.list)
     ListView list;
@@ -122,24 +122,11 @@ public class VideoListActivity extends Activity {
                     }
                 });
 
-                holder.btn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        ToastUtils.showToast(String.valueOf(position + 1));
-                    }
-                });
                 return convertView;
             }
         });
 
         list.setOnScrollListener(controller);
-
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ToastUtils.showToast("list " + String.valueOf(position + 1));
-            }
-        });
 
         controller.tinyListCallback(new TinyListController.TinyListCallback() {
             @Override
@@ -153,13 +140,11 @@ public class VideoListActivity extends Activity {
         TinyVideo video;
         ImageView play_iv;
         TextView index_tv;
-        View btn;
 
         public ViewHolder(View convertView) {
             video = (TinyVideo) convertView.findViewById(R.id.video);
             play_iv = (ImageView) convertView.findViewById(R.id.overlay_play_iv);
             index_tv = (TextView) convertView.findViewById(R.id.index_tv);
-            btn = convertView.findViewById(R.id.btn);
         }
     }
 
