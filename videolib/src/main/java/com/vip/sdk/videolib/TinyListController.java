@@ -2,6 +2,9 @@ package com.vip.sdk.videolib;
 
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,12 +40,16 @@ public class TinyListController extends TinyController implements AbsListView.On
             return null != info;
         }
 
-        public boolean match(TinyVideoInfo info, String uri) {
-            return isset() && info == info && info.matchUri(uri);
+        public boolean match(TinyVideoInfo tinyVideoInfo, String uri) {
+            return isset() && info == tinyVideoInfo && info.matchUri(uri);
+        }
+
+        public boolean match(TinyVideoInfo tinyVideoInfo, Uri uri) {
+            return isset() && info == tinyVideoInfo && info.matchUri(uri);
         }
 
         public void resetIfUnMatch(TinyVideoInfo tinyVideoInfo, Uri uri) {
-            if (isset() && this.info == tinyVideoInfo && !info.matchUri(uri)) {
+            if (isset() && info == tinyVideoInfo && !info.matchUri(uri)) {
                 if (started) {
                     dispatchStop(info);
                 }
@@ -58,8 +65,10 @@ public class TinyListController extends TinyController implements AbsListView.On
 
         public void set(TinyVideoInfo info) {
             reset();
-            this.info = info;
-            this.url = String.valueOf(this.info.uri);
+            if (null != info) {
+                this.info = info;
+                this.url = String.valueOf(this.info.uri);
+            }
         }
     }
 
@@ -68,6 +77,14 @@ public class TinyListController extends TinyController implements AbsListView.On
     // 正在播放的项
     protected final PlayInfo mPlaying = new PlayInfo();
     protected boolean mIsFling;
+
+    protected final long MIN_LOADING_DELAY = 1 * 1000;
+    protected Handler mHandler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            playCurrentDelayed(msg);
+        }
+    };
     public TinyListController(ListView view) {
         mListView = view;
     }
@@ -124,39 +141,21 @@ public class TinyListController extends TinyController implements AbsListView.On
                 newToPlay = mVideoInfoMap.get(video);
             }
         }
-        if (mPlaying.isset()) {
-            // 如果已经设置了，
-        } else {
-            playCurrent(newToPlay);
-        }
-        mPlaying.set(newToPlay);
 
-
-        final TinyVideoInfo oldPlaying = mPlaying;
-
-        TinyVideoInfo newToPlay = null;
-        if (null != video) {
-            synchronized (mVideoInfoMap) {
-                newToPlay = mVideoInfoMap.get(video);
-            }
-        }
-
-        mPlaying = newToPlay;
-
-        if (null != newToPlay) {
-            if (newToPlay == oldPlaying) {
-                // 如果两次一样
-                if (null == newToPlay.playUri) { // not load, to load
-                    determineLoad(newToPlay, newToPlay.uri, newToPlay.headers);
-                } else {
-                    // 如果
+        if (mPlaying.isset()) { // 如果之前有播放项
+            // 如果已经设置了，且URL改变了，
+            if (mPlaying.match(newToPlay, newToPlay.uri)) { // 如果什么都没有改变
+                if (!mPlaying.started) {
+                    playCurrent();
                 }
             } else {
-                stopPrevious(oldPlaying);
+                stopPrevious(mPlaying.info);
+                mPlaying.set(newToPlay);
+                playCurrent();
             }
-            playCurrent(newToPlay);
-        } else {
-            stopPrevious(oldPlaying);
+        } else { // 如果没有设置，则直接设置新的播放项，并播放
+            mPlaying.set(newToPlay);
+            playCurrent();
         }
     }
 
@@ -190,30 +189,37 @@ public class TinyListController extends TinyController implements AbsListView.On
         return null;
     }
 
-    protected void playCurrent(TinyVideoInfo current) {
-        if (null == current) {
+    protected void playCurrent() {
+        if (!mPlaying.isset()) { // 如果没有可播放项，则直接返回
             return;
         }
+        final TinyVideoInfo current = mPlaying.info;
+        // 如果已经下载完成，直接播放
+        current.video.dispatchLoading();
 
+        mHandler.removeMessages(0);
+        mHandler.sendMessageDelayed(Message.obtain(mHandler, 0, current), MIN_LOADING_DELAY);
+    }
+
+    protected void playCurrentDelayed(Message msg) {
+        TinyVideoInfo current = (TinyVideoInfo) msg.obj;
+        if (!mPlaying.match(current, current.uri)) {
+            return;
+        }
         if (null == current.playUri) {
+            // 还没有下载完成，则去下载
             determineLoad(current, current.uri, current.headers);
         } else {
-
-        }
-        // 如果播放的是当前的一项，且Uri相同，则不做任何处理
-        if (null != current.playUri) { // 说明已经下载好
-            if (!current.video.isPlaying()) { // 如果没有在播放
-                onVideoPrepared(current);
-            }
-            return;
-        }
-        // 否则，去下载
-        if (determineLoad(current, current.uri, current.headers)) {
-            onVideoPrepared(current);
+            current.video.superSetVideoURI(current.playUri);
+            current.video.start();
+            // 设置已经开始的标识
+            mPlaying.started = true;
         }
     }
 
     protected void stopPrevious(TinyVideoInfo previous) {
+        mHandler.removeMessages(0);
+
         if (null != previous) {
             previous.video.stopPlayback();
         }
@@ -237,17 +243,10 @@ public class TinyListController extends TinyController implements AbsListView.On
     }
 
     @Override
-    protected void onVideoPrepared(TinyVideoInfo videoInfo) {
-        if (null == mPlaying) {
-            determinePlay();
-        } else {
-            if (mPlaying == videoInfo) {
-                // 如果是当前播放项
-                mPlaying.video.superSetVideoURI(videoInfo.playUri);
-                mPlaying.video.superStart();
-            } else {
-                // 如果不是当前播放的，不需要作任何处理
-            }
+    protected void onVideoPrepared(TinyVideoInfo videoInfo, String uri) {
+        if (mPlaying.match(videoInfo, uri)) {
+            // 如果是当前播放项，且URL相同，则播放
+            playCurrent();
         }
     }
 

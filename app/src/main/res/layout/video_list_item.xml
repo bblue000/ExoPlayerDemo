@@ -2,14 +2,40 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
-    android:background="#333">
+    android:layout_height="220dp"
+    android:background="#333333">
 
     <com.vip.sdk.videolib.TinyVideo
         android:id="@+id/video"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:visibility="gone"/>
+        android:layout_centerInParent="true"
+        />
+
+    <ImageView
+        android:id="@+id/overlay_preview_iv"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:scaleType="centerCrop"
+        />
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:background="@drawable/media_list_name_bg"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+
+        <TextView
+            android:id="@+id/name_tv"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"/>
+
+    </RelativeLayout>
 
     <ImageView
         android:id="@+id/overlay_play_iv"
@@ -19,14 +45,12 @@
         android:src="@android:drawable/ic_media_play"
         />
 
-    <TextView
-        android:id="@+id/index_tv"
-        android:layout_width="fill_parent"
+    <ProgressBar
+        android:id="@+id/overlay_loading_pb"
+        style="@android:style/Widget.ProgressBar"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:padding="5dp"
-        android:gravity="center"
-        android:textSize="16sp"
-        android:text="1"/>
+        android:layout_centerInParent="true"
+        />
 
 </RelativeLayout>

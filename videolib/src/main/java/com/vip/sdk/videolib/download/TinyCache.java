@@ -1,5 +1,6 @@
 package com.vip.sdk.videolib.download;
 
+import android.content.Context;
 import android.net.Uri;
 
 import com.vip.sdk.videolib.LoadErrInfo;
@@ -21,6 +22,8 @@ public interface TinyCache {
      * 根据视频信息下载视频
      */
     void load(TinyVideoInfo video, TinyCacheCallback callback);
+
+    void clearCache(Context context);
 
     /**
      *

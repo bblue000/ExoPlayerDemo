@@ -75,7 +75,7 @@ public abstract class TinyController {
     /**
      * 视频缓存好时调用
      */
-    protected abstract void onVideoPrepared(TinyVideoInfo videoInfo) ;
+    protected abstract void onVideoPrepared(TinyVideoInfo videoInfo, String uri) ;
 
     /**
      * 视频缓存出错时调用
@@ -170,7 +170,7 @@ public abstract class TinyController {
         if (DEBUG) Log.d("yytest", uri.substring(uri.lastIndexOf("/") + 1) + "下载好了");
         if (info.attached() && info.matchUri(uri)) { // 过滤掉部分
             info.playUri = target;
-            onVideoPrepared(info);
+            onVideoPrepared(info, uri);
         }
     }
 

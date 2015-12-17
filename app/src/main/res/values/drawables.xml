@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <drawable name="divider">#000</drawable>
+    <drawable name="divider">@android:color/transparent</drawable>
     <drawable name="selector">@android:color/transparent</drawable>
 </resources>

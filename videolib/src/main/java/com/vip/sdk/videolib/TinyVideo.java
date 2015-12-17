@@ -3,17 +3,23 @@ package com.vip.sdk.videolib;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.VideoView;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
@@ -27,6 +33,8 @@ import java.util.Map;
  */
 public class TinyVideo extends VideoView {
 
+    private static final boolean DEBUG = TinyDebug.CONTROLLER;
+
     /**
      * 播放状态的回调。
      *
@@ -35,6 +43,11 @@ public class TinyVideo extends VideoView {
      * 如果已经开始播放，则在设置时将会调用{@link #STATE_START}。
      */
     public interface StateCallback {
+
+        /**
+         * 加载资源（全部或部分），此时还不能播放
+         */
+        int STATE_LOADING = 0;
 
         /**
          * 资源已加载（全部或部分），已经可以播放。
@@ -79,6 +92,8 @@ public class TinyVideo extends VideoView {
     protected Uri mUri;
     protected Map<String, String> mHeaders;
 
+    protected Field mWindowType;
+
     protected boolean mAttachedToWindow;
     public TinyVideo(Context context) {
         this(context, null);
@@ -94,6 +109,7 @@ public class TinyVideo extends VideoView {
     }
 
     // 初始化自定义的属性
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TinyVideo, defStyleAttr, 0);
         mSizeRatio = a.getFloat(R.styleable.TinyVideo_sizeRatio, -1.0f);
@@ -102,6 +118,18 @@ public class TinyVideo extends VideoView {
         superSetOnPreparedListener(mPreparedListener);
         superSetOnErrorListener(mErrorListener);
         superSetOnCompletionListener(mCompletionListener);
+
+        // this is important
+        // setZOrderOnTop(true);
+        // 这个可以让UI hierarchy截不了屏幕
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            setSecure(true);
+        }
+
+        try {
+            mWindowType = SurfaceView.class.getDeclaredField("mWindowType");
+            mWindowType.setAccessible(true);
+        } catch (Exception e) { }
     }
 
     @Override
@@ -181,6 +209,45 @@ public class TinyVideo extends VideoView {
             }
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        int oldType = reflectGetWindowType();
+        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
+        super.onDraw(canvas);
+        reflectSetWindowType(oldType);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int oldType = reflectGetWindowType();
+        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
+        super.dispatchDraw(canvas);
+        reflectSetWindowType(oldType);
+    }
+
+    protected int reflectGetWindowType() {
+        if (null == mWindowType) {
+            return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
+        }
+        try {
+            return (Integer) mWindowType.get(this);
+        } catch (Exception e) { }
+        return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
+    }
+
+    protected void reflectSetWindowType(int type) {
+        if (null == mWindowType) {
+            return;
+        }
+        try {
+            mWindowType.set(this, type);
+        } catch (Exception e) { }
+    }
+
+    protected void updateWindow(boolean force, boolean redrawNeeded) {
+        super.updateWindow(force, redrawNeeded);
     }
 
     /**
@@ -272,11 +339,8 @@ public class TinyVideo extends VideoView {
      */
     @Override
     public void start() {
-
-    }
-
-    public void superStart() {
         super.start();
+        checkAndSend(MSG_START, null);
     }
 
     @Override
@@ -330,19 +394,29 @@ public class TinyVideo extends VideoView {
         }
     }
 
-    /*package*/ void dispatchLoadErr(LoadErrInfo info) {
+    protected void dispatchLoading() {
+        checkAndSend(MSG_LOADING, null);
+    }
+
+    protected void dispatchLoadErr(LoadErrInfo info) {
         checkAndSend(MSG_LOADEER, info);
     }
 
+    private static final int MSG_LOADING = 0;
     private static final int MSG_PREPARED = 1;
     private static final int MSG_START = 2;
     private static final int MSG_PAUSE = 3;
     private static final int MSG_STOP = 4;
     private static final int MSG_LOADEER = 5;
-    private Handler mHandler = new Handler() {
+    private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
+                case MSG_LOADING:
+                    if (null != mStateCallback) {
+                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_LOADING);
+                    }
+                    break;
                 case MSG_PREPARED:
                     if (null != mStateCallback) {
                         mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_PREPARED);
@@ -375,6 +449,7 @@ public class TinyVideo extends VideoView {
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
+            if (DEBUG) Log.d("yytest", mUri + " prepared");
             checkAndSend(MSG_PREPARED, null);
             if (null != mOnPreparedListener) {
                 mOnPreparedListener.onPrepared(mp);

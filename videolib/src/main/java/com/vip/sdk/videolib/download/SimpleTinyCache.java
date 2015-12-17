@@ -1,5 +1,7 @@
 package com.vip.sdk.videolib.download;
 
+import android.content.Context;
+
 import com.vip.sdk.videolib.TinyVideoInfo;
 
 /**
@@ -19,4 +21,8 @@ public class SimpleTinyCache implements TinyCache {
         VideoAjaxCallback.download(tinyVideoInfo, callback);
     }
 
+    @Override
+    public void clearCache(Context context) {
+        VideoAjaxCallback.clearCache(context);
+    }
 }
