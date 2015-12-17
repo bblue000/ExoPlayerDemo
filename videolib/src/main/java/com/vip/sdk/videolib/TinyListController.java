@@ -77,6 +77,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     // 正在播放的项
     protected final PlayInfo mPlaying = new PlayInfo();
     protected boolean mIsFling;
+    protected boolean mFlingLoad; // 快速滑动时是否加载视频，默认为false
 
     protected final long MIN_LOADING_DELAY = 1 * 1000;
     protected Handler mHandler = new Handler(Looper.getMainLooper()) {
@@ -124,6 +125,11 @@ public class TinyListController extends TinyController implements AbsListView.On
 
     public TinyListController tinyListCallback(TinyListCallback callback) {
         mTinyListCallback = callback;
+        return this;
+    }
+
+    public TinyListController flingLoad(boolean flingLoad) {
+        mFlingLoad = flingLoad;
         return this;
     }
 
@@ -232,7 +238,7 @@ public class TinyListController extends TinyController implements AbsListView.On
 
     @Override
     protected boolean determineLoad(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
-        if (mIsFling) { // 如果快速滑动，则不下载
+        if (!mFlingLoad && mIsFling) { // 如果快速滑动，则不下载
             // if (DEBUG) Log.d("yytest", "fling....不下载");
             return false;
         }
@@ -253,7 +259,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     @Override
     protected void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
         if (mPlaying.match(info, uri) && null == mPlaying.info.playUri) {
-            // 如果是当前播放项，且没有下载完成（playUri is null），且没有改变起始的URL
+            // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
             mPlaying.info.video.dispatchLoadErr(status);
         }
     }

@@ -21,8 +21,6 @@ import butterknife.InjectView;
  */
 public class VideoListActivity extends Activity {
 
-    public static final String IP = "10.101.54.106";
-
     @InjectView(R.id.list)
     ListView list;
 

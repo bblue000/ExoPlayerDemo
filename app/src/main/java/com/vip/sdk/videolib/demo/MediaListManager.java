@@ -26,19 +26,18 @@ public class MediaListManager {
 //    for ($i=0; $i < 16; $i++) {
 //        # code...
 //        array_push($data, array(
-//                        'type'  		=> 1,
+//                'type'  		=> 1,
 //                'title' 		=> '测试视频标题'.($i + 1),
 //                'previewImage' 	=> 'http://10.101.54.106/public/vip'.($i % 5).'.jpg',
 //                'videoUrl' 		=> 'http://10.101.54.106/public/vip'.($i + 1).'.mp4',
 //        )
 //        );
 //    }
-//    $result['data'] = $data;
 //
 //    echo json_encode($data);
 
     public static void request(Context context, final Callback callback) {
-        new AQuery().ajax("http://10.101.54.106/test", MediaListInfo[].class, new AjaxCallback<MediaListInfo[]>() {
+        new AQuery().ajax("http://192.168.1.107/test", MediaListInfo[].class, new AjaxCallback<MediaListInfo[]>() {
             @Override
             public void callback(String url, MediaListInfo[] object, AjaxStatus status) {
                 callback.onSuccess(object);

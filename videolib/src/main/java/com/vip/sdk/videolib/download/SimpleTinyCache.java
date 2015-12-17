@@ -4,6 +4,8 @@ import android.content.Context;
 
 import com.vip.sdk.videolib.TinyVideoInfo;
 
+import java.io.File;
+
 /**
  *
  * 默认的下载器
@@ -19,6 +21,11 @@ public class SimpleTinyCache implements TinyCache {
     @Override
     public void load(final TinyVideoInfo tinyVideoInfo, final TinyCacheCallback callback) {
         VideoAjaxCallback.download(tinyVideoInfo, callback);
+    }
+
+    @Override
+    public File getCacheDir(Context context) {
+        return VideoAjaxCallback.getVideoCacheDir(context);
     }
 
     @Override

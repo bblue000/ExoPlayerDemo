@@ -127,7 +127,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         return null != targetFile && (FileManagerUtils.exists(targetFile) && targetFile.length() > 0) ;
     }
 
-    protected static void checkDiffUrlForTinyVideoInfo(String url, TinyVideoInfo tinyVideoInfo) {
+    protected static boolean checkDiffUrlForTinyVideoInfo(String url, TinyVideoInfo tinyVideoInfo) {
         String oldUrl = videoMap.get(tinyVideoInfo);
         if (DEBUG) Log.w("yytest" , "old url = " + oldUrl);
         if (DEBUG) Log.e("yytest", "new url = " + url);
@@ -137,7 +137,9 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
                 urlVideoMap.remove(tinyVideoInfo);
             }
             videoMap.put(tinyVideoInfo, url);
+            return true;
         }
+        return false;
     }
 
     /**
@@ -405,7 +407,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         if (null == info || null == cb) return;
 
         if (DEBUG) Log.d("yytest" , "checkCb matchUri = " + info.matchUri(url));
-        if (info.matchUri(url)) {
+        if (info.matchUri(url)) { // 这边只检查是否是相同的url，不对是否还被管理进行判断
             if (null != target) {
                 cb.onSuccess(info, url, Uri.fromFile(target));
             } else {

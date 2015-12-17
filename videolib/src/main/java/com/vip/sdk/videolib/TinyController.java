@@ -47,14 +47,14 @@ public abstract class TinyController {
     /**
      * 设置下载器，默认为{@link SimpleTinyCache}。
      */
-    public TinyController downloader(TinyCache downloader) {
-        mTinyCache = downloader;
+    public TinyController cache(TinyCache cache) {
+        mTinyCache = cache;
         return this;
     }
     // end
 
     /**
-     * 根据播放策略等，决定播放项
+     * 根据播放策略、子类逻辑等，决定播放项
      */
     public abstract void determinePlay() ;
 
@@ -86,47 +86,17 @@ public abstract class TinyController {
      * 决定是否需要下载
      */
     protected boolean determineLoad(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
-        if (null != info && !info.matchUri(uri)) {
+        if (null != info) { // 多余的判断不能避免下载出错，导致一直不下载的情况；且会一定程度地引起乱窜
             info.uri = uri;
             info.playUri = null;
             info.headers = headers;
-            getDownloader().load(info, mTinyCacheCallback);
+            getCache().load(info, mTinyCacheCallback);
             return true;
         }
         return false;
     }
 
     // internal
-    public AutoPlayStrategy getAutoPlayStrategy() {
-        if (null == mAutoPlayStrategy) {
-            synchronized (this) {
-                if (null == mAutoPlayStrategy) { // 使用默认的
-                    mAutoPlayStrategy = createDefaultAutoPlayStrategy();
-                }
-            }
-        }
-        return mAutoPlayStrategy;
-    }
-
-    protected AutoPlayStrategy createDefaultAutoPlayStrategy() {
-        return new NetDependStrategy();
-    }
-
-    public TinyCache getDownloader() {
-        if (null == mTinyCache) {
-            synchronized (this) {
-                if (null == mTinyCache) { // 使用默认的
-                    mTinyCache = createDefaultDownloader();
-                }
-            }
-        }
-        return mTinyCache;
-    }
-
-    protected TinyCache createDefaultDownloader() {
-        return new SimpleTinyCache();
-    }
-
     // 转发来自TinyVideo的操作，确保形成闭环
     /*package*/ void dispatchAttachVideo(TinyVideo video) {
         synchronized (mVideoInfoMap) {
@@ -156,6 +126,7 @@ public abstract class TinyController {
         }
         determineLoad(info, uri, headers);
     }
+    // end
 
     /**
      * 指定视频组件是否仍被管理
@@ -164,6 +135,10 @@ public abstract class TinyController {
         synchronized (mVideoInfoMap) {
             return mVideoInfoMap.containsValue(info);
         }
+    }
+
+    protected void dispatchOnDownloadSuccess(TinyVideoInfo info, String uri, long current, long total) {
+        //TODO 分配下载进度
     }
 
     protected void dispatchOnDownloadSuccess(TinyVideoInfo info, String uri, Uri target) {
@@ -183,7 +158,7 @@ public abstract class TinyController {
 
         @Override
         public void onProgress(TinyVideoInfo info, String uri, long current, long total) {
-
+            dispatchOnDownloadSuccess(info, uri, current, total);
         }
 
         @Override
@@ -197,5 +172,35 @@ public abstract class TinyController {
         }
 
     };
+
+    public AutoPlayStrategy getAutoPlayStrategy() {
+        if (null == mAutoPlayStrategy) {
+            synchronized (this) {
+                if (null == mAutoPlayStrategy) { // 使用默认的
+                    mAutoPlayStrategy = createDefaultAutoPlayStrategy();
+                }
+            }
+        }
+        return mAutoPlayStrategy;
+    }
+
+    protected AutoPlayStrategy createDefaultAutoPlayStrategy() {
+        return new NetDependStrategy();
+    }
+
+    public TinyCache getCache() {
+        if (null == mTinyCache) {
+            synchronized (this) {
+                if (null == mTinyCache) { // 使用默认的
+                    mTinyCache = createDefaultDownloader();
+                }
+            }
+        }
+        return mTinyCache;
+    }
+
+    protected TinyCache createDefaultDownloader() {
+        return new SimpleTinyCache();
+    }
 
 }

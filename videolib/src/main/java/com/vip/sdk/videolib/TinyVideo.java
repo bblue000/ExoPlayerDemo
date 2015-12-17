@@ -120,7 +120,7 @@ public class TinyVideo extends VideoView {
         superSetOnCompletionListener(mCompletionListener);
 
         // this is important
-        // setZOrderOnTop(true);
+        setZOrderOnTop(true);
         // 这个可以让UI hierarchy截不了屏幕
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             setSecure(true);
@@ -211,44 +211,44 @@ public class TinyVideo extends VideoView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        int oldType = reflectGetWindowType();
-        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
-        super.onDraw(canvas);
-        reflectSetWindowType(oldType);
-    }
+//    @Override
+//    protected void onDraw(Canvas canvas) {
+//        int oldType = reflectGetWindowType();
+//        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
+//        super.onDraw(canvas);
+//        reflectSetWindowType(oldType);
+//    }
+//
+//    @Override
+//    protected void dispatchDraw(Canvas canvas) {
+//        int oldType = reflectGetWindowType();
+//        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
+//        super.dispatchDraw(canvas);
+//        reflectSetWindowType(oldType);
+//    }
+//
+//    protected int reflectGetWindowType() {
+//        if (null == mWindowType) {
+//            return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
+//        }
+//        try {
+//            return (Integer) mWindowType.get(this);
+//        } catch (Exception e) { }
+//        return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
+//    }
+//
+//    protected void reflectSetWindowType(int type) {
+//        if (null == mWindowType) {
+//            return;
+//        }
+//        try {
+//            mWindowType.set(this, type);
+//        } catch (Exception e) { }
+//    }
 
-    @Override
-    protected void dispatchDraw(Canvas canvas) {
-        int oldType = reflectGetWindowType();
-        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
-        super.dispatchDraw(canvas);
-        reflectSetWindowType(oldType);
-    }
-
-    protected int reflectGetWindowType() {
-        if (null == mWindowType) {
-            return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
-        }
-        try {
-            return (Integer) mWindowType.get(this);
-        } catch (Exception e) { }
-        return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
-    }
-
-    protected void reflectSetWindowType(int type) {
-        if (null == mWindowType) {
-            return;
-        }
-        try {
-            mWindowType.set(this, type);
-        } catch (Exception e) { }
-    }
-
-    protected void updateWindow(boolean force, boolean redrawNeeded) {
-        super.updateWindow(force, redrawNeeded);
-    }
+//    protected void updateWindow(boolean force, boolean redrawNeeded) {
+//        super.updateWindow(force, redrawNeeded);
+//    }
 
     /**
      * {@inheritDoc}

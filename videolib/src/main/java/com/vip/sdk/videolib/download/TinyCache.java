@@ -6,6 +6,8 @@ import android.net.Uri;
 import com.vip.sdk.videolib.LoadErrInfo;
 import com.vip.sdk.videolib.TinyVideoInfo;
 
+import java.io.File;
+
 /**
  *
  * 视频下载器
@@ -23,6 +25,14 @@ public interface TinyCache {
      */
     void load(TinyVideoInfo video, TinyCacheCallback callback);
 
+    /**
+     * 获取缓存文件夹路径
+     */
+    File getCacheDir(Context context);
+
+    /**
+     * 清除缓存
+     */
     void clearCache(Context context);
 
     /**
