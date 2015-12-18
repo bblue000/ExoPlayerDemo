@@ -93,6 +93,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true);
 
         holder.overlayPlayIv.setVisibility(View.VISIBLE);
+        holder.overlayPauseIv.setVisibility(View.GONE);
 
         holder.overlayLoadingPb.setVisibility(View.GONE);
 
@@ -113,6 +114,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
                         holder.overlayLoadingPb.setVisibility(View.GONE);
                         holder.overlayPlayIv.setVisibility(View.GONE);
                         holder.overlayPreviewIv.setVisibility(View.GONE);
+                        holder.overlayPauseIv.setVisibility(View.VISIBLE);
                         holder.video.setVisibility(View.VISIBLE);
                         break;
                     case STATE_STOP:
@@ -120,6 +122,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
                         holder.video.setVisibility(View.GONE);
                     case STATE_PAUSE:
                         holder.overlayLoadingPb.setVisibility(View.GONE);
+                        holder.overlayPauseIv.setVisibility(View.GONE);
                         holder.overlayPlayIv.setVisibility(View.VISIBLE);
                         break;
                 }
@@ -128,6 +131,20 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
             @Override
             public void onLoadErr(TinyVideo video, LoadErrInfo status) {
                 ToastUtils.showToast(status.message);
+            }
+        });
+
+        holder.overlayPlayIv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                holder.video.start();
+            }
+        });
+
+        holder.overlayPauseIv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                holder.video.pause();
             }
         });
 
@@ -159,6 +176,8 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         ImageView overlayPreviewIv;
         @InjectView(R.id.overlay_play_iv)
         ImageView overlayPlayIv;
+        @InjectView(R.id.overlay_pause_iv)
+        ImageView overlayPauseIv;
         @InjectView(R.id.name_tv)
         TextView name_tv;
         @InjectView(R.id.overlay_loading_pb)

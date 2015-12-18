@@ -14,9 +14,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.SurfaceView;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.VideoView;
 
 import java.lang.reflect.Field;
@@ -92,7 +90,8 @@ public class TinyVideo extends VideoView {
     protected Uri mUri;
     protected Map<String, String> mHeaders;
 
-    protected Field mWindowType;
+    protected Field mPrivateFlags;
+    protected int PFLAG_SKIP_DRAW;
 
     protected boolean mAttachedToWindow;
     public TinyVideo(Context context) {
@@ -120,15 +119,20 @@ public class TinyVideo extends VideoView {
         superSetOnCompletionListener(mCompletionListener);
 
         // this is important
-        setZOrderOnTop(true);
+        // setZOrderOnTop(true);
+        setZOrderMediaOverlay(true);
         // 这个可以让UI hierarchy截不了屏幕
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             setSecure(true);
         }
-
         try {
-            mWindowType = SurfaceView.class.getDeclaredField("mWindowType");
-            mWindowType.setAccessible(true);
+            mPrivateFlags = View.class.getDeclaredField("mPrivateFlags");
+            mPrivateFlags.setAccessible(true);
+        } catch (Exception e) { }
+        try {
+            Field PFLAG_SKIP_DRAW_F = View.class.getDeclaredField("PFLAG_SKIP_DRAW");
+            PFLAG_SKIP_DRAW_F.setAccessible(true);
+            PFLAG_SKIP_DRAW = PFLAG_SKIP_DRAW_F.getInt(null);
         } catch (Exception e) { }
     }
 
@@ -211,40 +215,40 @@ public class TinyVideo extends VideoView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-//    @Override
-//    protected void onDraw(Canvas canvas) {
-//        int oldType = reflectGetWindowType();
-//        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
-//        super.onDraw(canvas);
-//        reflectSetWindowType(oldType);
-//    }
-//
-//    @Override
-//    protected void dispatchDraw(Canvas canvas) {
-//        int oldType = reflectGetWindowType();
-//        reflectSetWindowType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
-//        super.dispatchDraw(canvas);
-//        reflectSetWindowType(oldType);
-//    }
-//
-//    protected int reflectGetWindowType() {
-//        if (null == mWindowType) {
-//            return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
-//        }
-//        try {
-//            return (Integer) mWindowType.get(this);
-//        } catch (Exception e) { }
-//        return WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA;
-//    }
-//
-//    protected void reflectSetWindowType(int type) {
-//        if (null == mWindowType) {
-//            return;
-//        }
-//        try {
-//            mWindowType.set(this, type);
-//        } catch (Exception e) { }
-//    }
+    @Override
+    public void draw(Canvas canvas) {
+        int oldType = reflectGetPrivateFlags();
+        reflectSetPrivateFlags(oldType | PFLAG_SKIP_DRAW);
+        super.draw(canvas);
+        reflectSetPrivateFlags(oldType);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int oldType = reflectGetPrivateFlags();
+        reflectSetPrivateFlags(oldType & (~PFLAG_SKIP_DRAW));
+        super.dispatchDraw(canvas);
+        reflectSetPrivateFlags(oldType);
+    }
+
+    protected int reflectGetPrivateFlags() {
+        if (null == mPrivateFlags) {
+            return 0;
+        }
+        try {
+            return (Integer) mPrivateFlags.get(this);
+        } catch (Exception e) { }
+        return 0;
+    }
+
+    protected void reflectSetPrivateFlags(int value) {
+        if (null == mPrivateFlags) {
+            return;
+        }
+        try {
+            mPrivateFlags.set(this, value);
+        } catch (Exception e) { }
+    }
 
 //    protected void updateWindow(boolean force, boolean redrawNeeded) {
 //        super.updateWindow(force, redrawNeeded);
