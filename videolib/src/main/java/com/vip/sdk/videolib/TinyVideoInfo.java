@@ -30,14 +30,14 @@ public class TinyVideoInfo {
     /**
      * 视频组件{@link TinyVideo}
      */
-    public final TinyVideo video;
+    public final TinyVideoContainer video;
 
     /**
      * 管理该视频信息的{@link TinyController}
      */
     public final TinyController controller;
 
-    public TinyVideoInfo(TinyController controller, TinyVideo video) {
+    public TinyVideoInfo(TinyController controller, TinyVideoContainer video) {
         this.controller = controller;
         this.video = video;
     }

@@ -28,7 +28,7 @@ public class TinyListController extends TinyController implements AbsListView.On
         /**
          * 如果不是含有视频的项，返回null；如果是还有视频的项，则返回{@link TinyVideo}
          */
-        TinyVideo getTinyVideo(int position, View convertView);
+        TinyVideoContainer getTinyVideo(int position, View convertView);
     }
 
     protected class PlayInfo {
@@ -128,6 +128,9 @@ public class TinyListController extends TinyController implements AbsListView.On
         return this;
     }
 
+    /**
+     * 快速滑动时是否预先加载视频
+     */
     public TinyListController flingLoad(boolean flingLoad) {
         mFlingLoad = flingLoad;
         return this;
@@ -140,7 +143,7 @@ public class TinyListController extends TinyController implements AbsListView.On
             return;
         }
 
-        TinyVideo video = findCurrentPlayVideo(mListView);
+        TinyVideoContainer video = findCurrentPlayVideo(mListView);
         TinyVideoInfo newToPlay = null;
         if (null != video) {
             synchronized (mVideoInfoMap) {
@@ -170,7 +173,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     /**
      * 查找当前状态下的可播放项
      */
-    protected TinyVideo findCurrentPlayVideo(ListView listView) {
+    protected TinyVideoContainer findCurrentPlayVideo(ListView listView) {
         if (!listView.getGlobalVisibleRect(mTempRect)) { // 没有可显示的区域
             return null;
         }
@@ -186,7 +189,7 @@ public class TinyListController extends TinyController implements AbsListView.On
             if (childTop < top) continue;
             if (childTop > middle) break;
 
-            TinyVideo video = mTinyListCallback.getTinyVideo(firstItemPos + i, child);
+            TinyVideoContainer video = mTinyListCallback.getTinyVideo(firstItemPos + i, child);
             if (null != video) {
                 if (DEBUG) Log.w("yytest", "当前播放的项：" + (firstItemPos + i + 1));
                 return video;

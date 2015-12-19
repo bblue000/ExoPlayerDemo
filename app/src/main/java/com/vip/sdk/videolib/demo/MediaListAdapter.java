@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -16,7 +15,7 @@ import com.androidquery.AQuery;
 import com.vip.sdk.base.utils.ToastUtils;
 import com.vip.sdk.videolib.LoadErrInfo;
 import com.vip.sdk.videolib.TinyListController;
-import com.vip.sdk.videolib.TinyVideo;
+import com.vip.sdk.videolib.TinyVideoContainer;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 
@@ -102,9 +101,9 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         holder.video.setVideoPath(info.videoUrl);
 //        holder.video.setMediaController(new MediaController(mContext));
 
-        holder.video.setStateCallback(new TinyVideo.StateCallback() {
+        holder.video.setStateCallback(new TinyVideoContainer.StateCallback() {
             @Override
-            public void onStateChanged(TinyVideo video, int state) {
+            public void onStateChanged(TinyVideoContainer video, int state) {
                 switch (state) {
                     case STATE_LOADING:
                         holder.overlayLoadingPb.setVisibility(View.VISIBLE);
@@ -129,7 +128,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
             }
 
             @Override
-            public void onLoadErr(TinyVideo video, LoadErrInfo status) {
+            public void onLoadErr(TinyVideoContainer video, LoadErrInfo status) {
                 ToastUtils.showToast(status.message);
             }
         });
@@ -137,7 +136,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         holder.overlayPlayIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                holder.video.start();
+//                holder.video.start();
             }
         });
 
@@ -159,7 +158,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
     }
 
     @Override
-    public TinyVideo getTinyVideo(int position, View convertView) {
+    public TinyVideoContainer getTinyVideo(int position, View convertView) {
         return ((ViewHolder) convertView.getTag()).video;
     }
 
@@ -171,7 +170,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
      */
     static class ViewHolder {
         @InjectView(R.id.video)
-        TinyVideo video;
+        TinyVideoContainer video;
         @InjectView(R.id.overlay_preview_iv)
         ImageView overlayPreviewIv;
         @InjectView(R.id.overlay_play_iv)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.vip.sdk.videolib.demo.RootContainer
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
@@ -12,9 +12,9 @@
         android:dividerHeight="15dp"
         android:divider="@drawable/divider"
         android:listSelector="@drawable/selector"
-        android:background="@android:color/transparent"
+        android:background="@android:color/white"
         >
 
     </ListView>
 
-</com.vip.sdk.videolib.demo.RootContainer>
+</RelativeLayout>

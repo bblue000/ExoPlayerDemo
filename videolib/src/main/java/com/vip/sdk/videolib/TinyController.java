@@ -28,7 +28,7 @@ public abstract class TinyController {
 
     private AutoPlayStrategy mAutoPlayStrategy;
     private TinyCache mTinyCache;
-    protected LinkedHashMap<TinyVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<TinyVideo, TinyVideoInfo>();
+    protected LinkedHashMap<TinyVideoContainer, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<TinyVideoContainer, TinyVideoInfo>();
 
     protected TinyController() {
     }
@@ -90,6 +90,7 @@ public abstract class TinyController {
             info.uri = uri;
             info.playUri = null;
             info.headers = headers;
+            // info.video.stopPlayback();
             getCache().load(info, mTinyCacheCallback);
             return true;
         }
@@ -98,7 +99,7 @@ public abstract class TinyController {
 
     // internal
     // 转发来自TinyVideo的操作，确保形成闭环
-    /*package*/ void dispatchAttachVideo(TinyVideo video) {
+    /*package*/ void dispatchAttachVideo(TinyVideoContainer video) {
         synchronized (mVideoInfoMap) {
             if (mVideoInfoMap.containsKey(video)) {
                 return;
@@ -110,7 +111,7 @@ public abstract class TinyController {
     /**
      * 将指定的video从控制器中移除，不再对其进行管理
      */
-    /*package*/ void dispatchDetachVideo(TinyVideo video) {
+    /*package*/ void dispatchDetachVideo(TinyVideoContainer video) {
         synchronized (mVideoInfoMap) {
             mVideoInfoMap.remove(video);
         }
@@ -119,7 +120,7 @@ public abstract class TinyController {
     /**
      * 转发来自视频的设置，由该处统一管理
      */
-    /*package*/ void dispatchSetUri(TinyVideo video, Uri uri, Map<String, String> headers) {
+    /*package*/ void dispatchSetUri(TinyVideoContainer video, Uri uri, Map<String, String> headers) {
         TinyVideoInfo info;
         synchronized (mVideoInfoMap) {
             info = mVideoInfoMap.get(video);
