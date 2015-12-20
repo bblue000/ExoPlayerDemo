@@ -5,11 +5,10 @@
     android:layout_height="200dp"
     android:background="@android:color/black">
 
-    <com.vip.sdk.videolib.TinyVideoContainer
+    <com.vip.sdk.videolib.TinyVideo
         android:id="@+id/video"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_centerInParent="true"
         />
 
     <ImageView

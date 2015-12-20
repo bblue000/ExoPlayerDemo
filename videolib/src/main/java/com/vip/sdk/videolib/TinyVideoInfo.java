@@ -28,16 +28,16 @@ public class TinyVideoInfo {
     public Uri playUri;
 
     /**
-     * 视频组件{@link TinyVideo}
+     * 视频组件{@link TinyVideoImpl}
      */
-    public final TinyVideoContainer video;
+    public final TinyVideo video;
 
     /**
      * 管理该视频信息的{@link TinyController}
      */
     public final TinyController controller;
 
-    public TinyVideoInfo(TinyController controller, TinyVideoContainer video) {
+    public TinyVideoInfo(TinyController controller, TinyVideo video) {
         this.controller = controller;
         this.video = video;
     }

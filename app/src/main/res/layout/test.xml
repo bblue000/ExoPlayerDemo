@@ -14,9 +14,21 @@
             android:background="@drawable/ic_launcher"/>
     </com.vip.test.exoplayerdemo.VG>
 
-    <VideoView
-        android:id="@+id/vv"
+    <RelativeLayout
+        android:id="@+id/rlt"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
+
+        <VideoView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
+
+    </RelativeLayout>
+
+    <!--<VideoView-->
+        <!--android:id="@+id/vv"-->
+        <!--android:layout_width="fill_parent"-->
+        <!--android:layout_height="wrap_content" />-->
 
 </LinearLayout>
