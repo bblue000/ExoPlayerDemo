@@ -44,7 +44,9 @@ public class Test extends Activity {
 
         rlt = (RelativeLayout) findViewById(R.id.rlt);
 //        vv = (VideoView) findViewById(R.id.vv);
-        new Handler().postDelayed(new Runnable() {
+
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
 
@@ -52,6 +54,13 @@ public class Test extends Activity {
                 rlt.addView(vv, new ViewGroup.LayoutParams(-1, -1));
                 vv.setVideoPath("http://192.168.1.107/public/vip1.mp4");
                 vv.start();
+
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        vv.setVideoPath("http://192.168.1.107/public/vip2.mp4");
+                    }
+                }, 5000L);
             }
         }, 1000);
 

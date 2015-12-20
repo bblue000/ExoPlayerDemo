@@ -70,4 +70,9 @@ public class TinyVideoInfo {
         TinyVideoInfo another = (TinyVideoInfo) o;
         return ObjectUtils.equals(this.video, another.video);
     }
+
+    @Override
+    public String toString() {
+        return "video info = " + video;
+    }
 }

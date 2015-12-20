@@ -11,6 +11,8 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
 
+import com.vip.sdk.base.utils.ObjectUtils;
+
 import java.util.Map;
 
 /**
@@ -24,8 +26,11 @@ import java.util.Map;
  */
 public class TinyListController extends TinyController implements AbsListView.OnScrollListener {
 
-    static final boolean DEBUG = true;
+    static final boolean DEBUG = TinyDebug.LIST_CONTROLLER;
 
+    /**
+     * 封装针对ListView视图类型等方面的支持API，以便跟踪处理
+     */
     public interface TinyListCallback {
         /**
          * 如果不是含有视频的项，返回null；如果是还有视频的项，则返回{@link TinyVideoImpl}
@@ -35,25 +40,35 @@ public class TinyListController extends TinyController implements AbsListView.On
 
     protected class PlayInfo {
         public TinyVideoInfo info;
+        public String url; // 指定播放时的URL
         public boolean started;
-        public String url;
+        public boolean manual;
 
         public boolean isset() {
             return null != info;
         }
 
         public boolean match(TinyVideoInfo tinyVideoInfo, String uri) {
-            return isset() && info == tinyVideoInfo && info.matchUri(uri);
+            return isset() && info == tinyVideoInfo && ObjectUtils.equals(uri, this.url);
         }
 
         public boolean match(TinyVideoInfo tinyVideoInfo, Uri uri) {
-            return isset() && info == tinyVideoInfo && info.matchUri(uri);
+            return isset() && info == tinyVideoInfo && ObjectUtils.equals(String.valueOf(uri), this.url);
         }
 
         public void resetIfUnMatch(TinyVideoInfo tinyVideoInfo, Uri uri) {
-            if (isset() && info == tinyVideoInfo && !info.matchUri(uri)) {
+            if (isset() && info == tinyVideoInfo && !ObjectUtils.equals(String.valueOf(uri), this.url)) {
                 if (started) {
-                    dispatchStop(info);
+                    dispatchToVideoStop(info);
+                }
+                reset();
+            }
+        }
+
+        public void resetIfUnMatch(TinyVideo video, Uri uri) {
+            if (isset() && info.video == video && !ObjectUtils.equals(String.valueOf(uri), this.url)) {
+                if (started) {
+                    dispatchToVideoStop(info);
                 }
                 reset();
             }
@@ -69,8 +84,13 @@ public class TinyListController extends TinyController implements AbsListView.On
             reset();
             if (null != info) {
                 this.info = info;
-                this.url = String.valueOf(this.info.uri);
+                this.url = String.valueOf(this.info.uri); // 即时地保存url到临时字段
             }
+        }
+
+        @Override
+        public String toString() {
+            return "info = " + info + ", url = " + url;
         }
     }
 
@@ -80,6 +100,8 @@ public class TinyListController extends TinyController implements AbsListView.On
     protected final PlayInfo mPlaying = new PlayInfo();
     protected boolean mIsFling;
     protected boolean mFlingLoad; // 快速滑动时是否加载视频，默认为false
+    protected boolean mIsTouchScrolling;
+    protected boolean mTouchScrollingLoad = true; // 触屏滑动时是否加载视频，默认为true
 
     protected final long MIN_LOADING_DELAY = 1 * 1000;
     protected Handler mHandler = new Handler(Looper.getMainLooper()) {
@@ -97,15 +119,18 @@ public class TinyListController extends TinyController implements AbsListView.On
     public void dispatchOnScrollStateChanged(AbsListView view, int scrollState) {
         // if (DEBUG) Log.d("yytest", "dispatch scroll....");
         mIsFling = false;
+        mIsTouchScrolling = false;
         switch (scrollState) {
             case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
                 determinePlay();
                 break;
             case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
+                // if (DEBUG) Log.d("yytest", "touch scrolling....");
+                mIsTouchScrolling = true;
                 break;
             case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
                 // if (DEBUG) Log.d("yytest", "fling....");
-                mIsFling = (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING);
+                mIsFling = true;
                 break;
         }
     }
@@ -138,7 +163,14 @@ public class TinyListController extends TinyController implements AbsListView.On
         return this;
     }
 
-    @Override
+    /**
+     * 手势触屏滑动时是否预先加载视频
+     */
+    public TinyListController touchScrollingLoad(boolean touchScrollingLoad) {
+        mTouchScrollingLoad = touchScrollingLoad;
+        return this;
+    }
+
     public void determinePlay() {
         // 如果没有设置该回调，无法实现下面的功能
         if (null == mTinyListCallback) {
@@ -153,6 +185,7 @@ public class TinyListController extends TinyController implements AbsListView.On
             }
         }
 
+        if (DEBUG) Log.d("yytest", "determine playing: " + mPlaying);
         if (mPlaying.isset()) { // 如果之前有播放项
             // 如果已经设置了，且URL改变了，
             if (mPlaying.match(newToPlay, newToPlay.uri)) { // 如果什么都没有改变
@@ -205,6 +238,10 @@ public class TinyListController extends TinyController implements AbsListView.On
             return;
         }
         final TinyVideoInfo current = mPlaying.info;
+        if (!mPlaying.manual && !getAutoPlayStrategy().autoPlay(current.video)) {
+            // 如果不是用户操作，且不允许自动播放，直接返回
+            return;
+        }
         // 如果已经下载完成，直接播放
         current.video.dispatchLoading();
         if (DEBUG) Log.e("yytest", current.video + " start uri : " + current.uri);
@@ -216,44 +253,62 @@ public class TinyListController extends TinyController implements AbsListView.On
 
     protected void playCurrentDelayed(Message msg) {
         TinyVideoInfo current = (TinyVideoInfo) msg.obj;
-        if (!mPlaying.match(current, current.uri)) {
+        if (!mPlaying.match(current, current.uri)) { // 再次验证
             return;
         }
         if (null == current.playUri) {
+            if (DEBUG) Log.d("yytest", current.video + " need load play uri");
             // 还没有下载完成，则去下载
-            determineLoad(current, current.uri, current.headers);
+            dispatchDownload(current, current.uri, current.headers);
         } else {
             if (DEBUG) Log.e("yytest", current.video + " start true uri : " + getPlayUriFileName(current.playUri));
-            current.video.superSetVideoURI(current.playUri);
-            current.video.start();
+            dispatchToVideoStart(current);
             // 设置已经开始的标识
             mPlaying.started = true;
         }
     }
 
     protected void stopPrevious(TinyVideoInfo previous) {
-        mHandler.removeMessages(0);
+        mHandler.removeMessages(0); // 不能忘记移除所有的播放message
 
         if (null != previous) {
             previous.video.stopPlayback();
         }
     }
 
-    @Override
     public ViewGroup getContainer() {
         return mListView;
     }
 
     @Override
-    protected boolean determineLoad(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
+    protected void dispatchFromVideoSetUri(TinyVideo video, Uri uri, Map<String, String> headers) {
+        // 重新设置时，检测是否是当前播放项，如果是，则重置其状态
+        mPlaying.resetIfUnMatch(video, uri);
+        super.dispatchFromVideoSetUri(video, uri, headers);
+    }
+
+    @Override
+    protected void dispatchFromVideoStart(TinyVideoInfo info) {
+        if (null != info) {
+            if (null == info.playUri) { // 还没有下载
+                dispatchDownload(info, info.uri, info.headers);
+            } else {
+                dispatchToVideoStart(info);
+            }
+        }
+    }
+
+    @Override
+    protected void dispatchDownload(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
+        if (!mTouchScrollingLoad && mIsTouchScrolling) { // 如果触屏滑动，则不下载
+            // if (DEBUG) Log.d("yytest", "touch scrolling....不下载");
+            return;
+        }
         if (!mFlingLoad && mIsFling) { // 如果快速滑动，则不下载
             // if (DEBUG) Log.d("yytest", "fling....不下载");
-            return false;
+            return;
         }
-        if (null != mPlaying) {
-            mPlaying.resetIfUnMatch(info, uri);
-        }
-        return super.determineLoad(info, uri, headers);
+        super.dispatchDownload(info, uri, headers);
     }
 
     @Override
@@ -268,16 +323,15 @@ public class TinyListController extends TinyController implements AbsListView.On
     protected void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
         if (mPlaying.match(info, uri) && null == mPlaying.info.playUri) {
             // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
-            mPlaying.info.video.dispatchLoadErr(status);
+            dispatchToVideoLoadErr(mPlaying.info, uri, status);
         }
     }
 
-    protected void dispatchStop(TinyVideoInfo info) {
-        info.video.stopPlayback();
-    }
-
+    // util
+    /**
+     * 获取uri中的文件名
+     */
     protected String getPlayUriFileName(Uri uri) {
         return null == uri ? null : uri.getLastPathSegment();
-
     }
 }

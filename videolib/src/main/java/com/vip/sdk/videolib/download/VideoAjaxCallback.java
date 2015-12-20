@@ -93,17 +93,17 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
 
         String url = String.valueOf(tinyVideoInfo.uri);
 
-        // 先检查目标文件是否已经存在，如果已经存在就直接返回吧，更快地得到相应
-        File targetFile = AQUtility.getCacheFile(getVideoCacheDir(tinyVideoInfo.video.getContext()), url);
-        if (checkMayExistTargetFile(url, tinyVideoInfo, targetFile)) {
-            // 如果文件已经存在，直接返回
-            callback.onSuccess(tinyVideoInfo, url, Uri.fromFile(targetFile));
-            return ;
-        }
-
         // 文件不存在，则需要下载
         synchronized (queueMap) {
             checkDiffUrlForTinyVideoInfo(url, tinyVideoInfo);
+
+            // 先检查目标文件是否已经存在，如果已经存在就直接返回吧，更快地得到相应
+            File targetFile = AQUtility.getCacheFile(getVideoCacheDir(tinyVideoInfo.video.getContext()), url);
+            if (checkMayExistTargetFile(url, tinyVideoInfo, targetFile)) {
+                // 如果文件已经存在，直接返回
+                callback.onSuccess(tinyVideoInfo, url, Uri.fromFile(targetFile));
+                return ;
+            }
 
             if (!queueMap.containsKey(url)) {
                 addQueue(url, tinyVideoInfo, callback);

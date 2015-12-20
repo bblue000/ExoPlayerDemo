@@ -137,7 +137,6 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         holder.overlayPlayIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                holder.video.setVideoPath(info.videoUrl);
                 holder.video.start();
             }
         });

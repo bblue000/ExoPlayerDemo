@@ -17,6 +17,11 @@ public class TinyDebug {
     public static boolean CONTROLLER = false;
 
     /**
+     * debug controller
+     */
+    public static boolean LIST_CONTROLLER = true;
+
+    /**
      * debug cahce
      */
     public static boolean CACHE = false;

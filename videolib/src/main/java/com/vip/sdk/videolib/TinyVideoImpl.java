@@ -7,7 +7,7 @@ import android.util.AttributeSet;
 import android.widget.VideoView;
 
 /**
- * 继承自{@link android.widget.VideoView}，以防以后有定制修改的地方
+ * 继承自{@link android.widget.VideoView}，不公开，以便以后有定制修改的地方
  *
  * <p/>
  * <p/>

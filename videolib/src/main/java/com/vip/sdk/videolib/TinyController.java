@@ -2,7 +2,6 @@ package com.vip.sdk.videolib;
 
 import android.net.Uri;
 import android.util.Log;
-import android.view.ViewGroup;
 
 import com.vip.sdk.videolib.autoplay.AutoPlayStrategy;
 import com.vip.sdk.videolib.autoplay.NetDependStrategy;
@@ -54,16 +53,6 @@ public abstract class TinyController {
     // end
 
     /**
-     * 根据播放策略、子类逻辑等，决定播放项
-     */
-    public abstract void determinePlay() ;
-
-    /**
-     * 获取容器控件对象
-     */
-    public abstract ViewGroup getContainer();
-
-    /**
      * 销毁中间数据，一般是在界面关闭时调用
      */
     public void destroy() {
@@ -82,24 +71,9 @@ public abstract class TinyController {
      */
     protected abstract void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) ;
 
-    /**
-     * 决定是否需要下载
-     */
-    protected boolean determineLoad(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
-        if (null != info) { // 多余的判断不能避免下载出错，导致一直不下载的情况；且会一定程度地引起乱窜
-            info.uri = uri;
-            info.playUri = null;
-            info.headers = headers;
-            // info.video.stopPlayback();
-            getCache().load(info, mTinyCacheCallback);
-            return true;
-        }
-        return false;
-    }
-
     // internal
     // 转发来自TinyVideo的操作，确保形成闭环
-    /*package*/ void dispatchAttachVideo(TinyVideo video) {
+    protected void dispatchAttachVideo(TinyVideo video) {
         synchronized (mVideoInfoMap) {
             if (mVideoInfoMap.containsKey(video)) {
                 return;
@@ -111,28 +85,81 @@ public abstract class TinyController {
     /**
      * 将指定的video从控制器中移除，不再对其进行管理
      */
-    /*package*/ void dispatchDetachVideo(TinyVideo video) {
+    protected void dispatchDetachVideo(TinyVideo video) {
         synchronized (mVideoInfoMap) {
             mVideoInfoMap.remove(video);
         }
     }
 
     /**
-     * 转发来自视频的设置，由该处统一管理
+     * 转发来自视频的设置，由该处统一管理；
+     * 尝试加载/缓存视频
      */
-    /*package*/ void dispatchSetUri(TinyVideo video, Uri uri, Map<String, String> headers) {
+    protected void dispatchFromVideoSetUri(TinyVideo video, Uri uri, Map<String, String> headers) {
         TinyVideoInfo info;
         synchronized (mVideoInfoMap) {
             info = mVideoInfoMap.get(video);
         }
-        determineLoad(info, uri, headers);
+        // dispatchToVideoStop(info); // 无论如何先停止
+        if (null != info) {
+            info.headers = headers;
+            if (info.matchUri(uri)) {
+                if (null == info.playUri) {
+                    dispatchDownload(info, uri, headers);
+                } else {
+                    dispatchOnDownloadSuccess(info, String.valueOf(uri), info.playUri);
+                }
+            } else {
+                info.uri = uri;
+                info.playUri = null;
+                dispatchDownload(info, uri, headers);
+            }
+        }
+    }
+
+    /*package*/ void dispatchFromVideoStart(TinyVideo video) {
+        TinyVideoInfo info;
+        synchronized (mVideoInfoMap) {
+            info = mVideoInfoMap.get(video);
+        }
+        dispatchFromVideoStart(info);
+    }
+
+    protected abstract void dispatchFromVideoStart(TinyVideoInfo info) ;
+
+    protected void dispatchDownload(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
+        getCache().load(info, mTinyCacheCallback);
+    }
+
+    protected void dispatchToVideoSetVideoURI(TinyVideoInfo info, Uri playUri) {
+        if (null != info) {
+            info.video.innerSetVideoURI(info.playUri);
+        }
+    }
+
+    protected void dispatchToVideoStart(TinyVideoInfo info) {
+        if (null != info) {
+            info.video.innerStart();
+        }
+    }
+
+    protected void dispatchToVideoStop(TinyVideoInfo info) {
+        if (null != info) {
+            info.video.stopPlayback();
+        }
+    }
+
+    protected void dispatchToVideoLoadErr(TinyVideoInfo info, String uri, LoadErrInfo status) {
+        if (null != info) {
+            info.video.dispatchLoadErr(status);
+        }
     }
     // end
 
     /**
      * 指定视频组件是否仍被管理
      */
-    /*package*/ boolean isVideoAttached(TinyVideoInfo info) {
+    protected boolean isVideoAttached(TinyVideoInfo info) {
         synchronized (mVideoInfoMap) {
             return mVideoInfoMap.containsValue(info);
         }

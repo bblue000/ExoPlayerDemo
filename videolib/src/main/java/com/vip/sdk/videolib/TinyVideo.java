@@ -20,7 +20,10 @@ import java.util.Map;
  *
  * 包装一些逻辑。
  *
+ * <br/>
  *
+ * 用一层ViewGroup包装并提供给外部使用，有较好的兼容性；
+ * 使用具体的控件（如{@link android.widget.VideoView}或者{@link android.view.SurfaceView}），不利于以后的替换、修改
  *
  * <p/>
  * <p/>
@@ -246,7 +249,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         mUri = uri;
         mHeaders = headers;
         if (null != mTinyController) {
-            mTinyController.dispatchSetUri(this, uri, mHeaders);
+            mTinyController.dispatchFromVideoSetUri(this, uri, mHeaders);
         }
     }
 
@@ -268,7 +271,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
                 controller.dispatchAttachVideo(this);
             }
             if (null != mUri) {
-                controller.dispatchSetUri(this, mUri, mHeaders);
+                controller.dispatchFromVideoSetUri(this, mUri, mHeaders);
             }
         }
     }
@@ -284,11 +287,14 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         return isVideoAdded() ? mVideoView.isPlaying() : false;
     }
 
-    /**
-     * 异步进行，即调用此方法后，不能直接根据{@link #isPlaying()}判断是否已经在播放
-     */
     @Override
     public void start() {
+        if (isVideoAdded() && null != mTinyController) {
+            mTinyController.dispatchFromVideoStart(this);
+        }
+    }
+
+    /*package*/ void innerStart() {
         if (!isVideoAdded()) {
             addTinyVideo();
         }
@@ -312,20 +318,17 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         if (isVideoAdded()) {
             mVideoView.suspend();
             removeVideoView();
+            checkAndSend(MSG_SUSPEND, null);
         }
-        checkAndSend(MSG_SUSPEND, null);
     }
 
-    /**
-     * 异步进行，即调用此方法后，不能直接根据{@link #isPlaying()}判断是否已经在播放
-     */
     @Override
     public void stopPlayback() {
         if (isVideoAdded()) {
             mVideoView.stopPlayback();
             removeVideoView();
+            checkAndSend(MSG_STOP, null);
         }
-        checkAndSend(MSG_STOP, null);
     }
 
     @Override
@@ -373,7 +376,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void superSetVideoURI(Uri uri) {
+    /*package*/ void innerSetVideoURI(Uri uri) {
         if (null == mTinyController) {
             throw new UnsupportedOperationException("non TinyController supplied");
         }
