@@ -249,7 +249,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     /**
      * 通过该对象与{@link TinyListController}交互
      */
-    /*package*/TinyVideoInfo myInfo() {
+    public TinyVideoInfo myInfo() {
         return mTinyVideoInfo;
     }
 
@@ -316,7 +316,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
 
     @Override
     public void start() {
-        if (isVideoAdded() && null != mTinyController) {
+        if (null != mTinyController) {
             mTinyController.dispatchFromVideoStart(myInfo());
         }
     }
@@ -351,7 +351,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
 
     @Override
     public void stopPlayback() {
-        if (isVideoAdded() && null != mTinyController) {
+        if (null != mTinyController) {
             mTinyController.dispatchFromVideoStop(myInfo());
         }
     }
@@ -360,8 +360,8 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         if (isVideoAdded()) {
             mVideoView.stopPlayback();
             removeVideoView();
-            checkAndSend(MSG_STOP, null);
         }
+        checkAndSend(MSG_STOP, null);
     }
 
     @Override

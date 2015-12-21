@@ -108,12 +108,12 @@ public abstract class TinyController {
      */
     protected void dispatchDownload(TinyVideoInfo info, boolean force) {
         if (null != info) {
-            if (force || getAutoPlayStrategy().autoLoad(info.video)) { // 如果允许自动加载播放，则往下执行
-                if (null == info.playUri) {
+            if (null == info.playUri) {
+                if (force || getAutoPlayStrategy().autoLoad(info.video)) { // 如果允许自动加载播放，则往下执行
                     getCache().load(info, mTinyCacheCallback);
-                } else {
-                    dispatchOnDownloadSuccess(info, String.valueOf(info.uri), info.playUri);
                 }
+            } else {
+                dispatchOnDownloadSuccess(info, String.valueOf(info.uri), info.playUri);
             }
         }
     }
