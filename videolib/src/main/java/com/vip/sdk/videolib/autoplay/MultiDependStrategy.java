@@ -15,23 +15,23 @@ import java.util.List;
  *
  * @since 1.0
  */
-public class MultiDependStrategy implements AutoPlayStrategy {
+public class MultiDependStrategy implements AutoLoadStrategy {
 
-    private List<AutoPlayStrategy> mOthers;
+    private List<AutoLoadStrategy> mOthers;
     public MultiDependStrategy() {
 
     }
 
-    public MultiDependStrategy with(AutoPlayStrategy one) {
+    public MultiDependStrategy with(AutoLoadStrategy one) {
         checkList();
         mOthers.add(one);
         return this;
     }
 
-    public MultiDependStrategy(AutoPlayStrategy... others) {
+    public MultiDependStrategy(AutoLoadStrategy... others) {
         if (null != others && others.length > 0) {
             checkList();
-            for (AutoPlayStrategy other: mOthers) {
+            for (AutoLoadStrategy other: mOthers) {
                 mOthers.add(other);
             }
         }
@@ -39,18 +39,18 @@ public class MultiDependStrategy implements AutoPlayStrategy {
 
     private void checkList() {
         if (null == mOthers) {
-            mOthers = new ArrayList<AutoPlayStrategy>(2);
+            mOthers = new ArrayList<AutoLoadStrategy>(2);
         }
     }
 
     @Override
-    public boolean autoPlay(TinyVideo video) {
+    public boolean autoLoad(TinyVideo video) {
         if (null == mOthers) {
             return false;
         }
         boolean flag = true;
         for (int i = 0; i < mOthers.size(); i++) {
-            flag &= mOthers.get(i).autoPlay(video);
+            flag &= mOthers.get(i).autoLoad(video);
         }
         return flag;
     }

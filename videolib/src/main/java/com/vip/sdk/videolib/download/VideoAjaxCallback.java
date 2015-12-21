@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * {@link #slotSize(long)}控制没下载指定大小进行验证，如果没有等待的视频项，则无需继续下载；
+ * {@link #slotSize(long)}控制每下载指定大小进行验证，如果没有等待的视频项，则无需继续下载；
  *
  * <br/>
  *
@@ -101,7 +101,8 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
             File targetFile = AQUtility.getCacheFile(getVideoCacheDir(tinyVideoInfo.video.getContext()), url);
             if (checkMayExistTargetFile(url, tinyVideoInfo, targetFile)) {
                 // 如果文件已经存在，直接返回
-                callback.onSuccess(tinyVideoInfo, url, Uri.fromFile(targetFile));
+                callback(url, tinyVideoInfo, targetFile, null, callback);
+                // callback.onSuccess(tinyVideoInfo, url, Uri.fromFile(targetFile));
                 return ;
             }
 
@@ -182,8 +183,8 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         synchronized (queueMap) {
             if (queueMap.containsKey(url)) {
                 Map<?, ?> urlVideoMap = queueMap.get(url);
-                if (null == urlVideoMap || urlVideoMap.isEmpty()) {
-                    if (null == myInfo || !myInfo.matchUri(url)) {
+                if (null == urlVideoMap || urlVideoMap.isEmpty()) { // 没有其他等待项
+                    if (null == myInfo || !myInfo.matchUri(url)) { // 当前等待项的URL已改变
                         return false;
                     }
                 }
@@ -377,23 +378,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         if (DEBUG) Log.d("yytest" , "callback result = " + object);
 
         TinyVideoInfo myInfo = mTinyVideoInfo.get();
-        synchronized (queueMap) {
-            WeakHashMap<TinyVideoInfo, TinyCache.TinyCacheCallback> ivs = queueMap.remove(url);
-            videoMap.remove(myInfo);
-
-            //check if view queue already contains first view
-            if (null == ivs || !ivs.containsKey(myInfo)) {
-                 checkCb(url, myInfo, object, status, mCallback);
-            }
-
-            if (null != ivs) {
-                Set<TinyVideoInfo> set = ivs.keySet();
-                for (TinyVideoInfo info : set) {
-                    TinyCache.TinyCacheCallback cb = ivs.get(info);
-                    checkCb(url, info, object, status, cb);
-                }
-            }
-        }
+        callback(url, myInfo, object, status, mCallback);
     }
 
     @Override
@@ -401,9 +386,32 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         queueMap.remove(url);
     }
 
-    private void checkCb(String url, TinyVideoInfo info,
-                         File target, AjaxStatus status,
-                         TinyCache.TinyCacheCallback cb) {
+    // 公共方法封装
+    protected static void callback(String url, TinyVideoInfo myInfo,
+                                   File target, AjaxStatus status,
+                                   TinyCache.TinyCacheCallback myCallback) {
+        synchronized (queueMap) {
+            WeakHashMap<TinyVideoInfo, TinyCache.TinyCacheCallback> ivs = queueMap.remove(url);
+            videoMap.remove(myInfo);
+
+            //check if view queue already contains first view
+            if (null == ivs || !ivs.containsKey(myInfo)) {
+                checkCb(url, myInfo, target, status, myCallback);
+            }
+
+            if (null != ivs) {
+                Set<TinyVideoInfo> set = ivs.keySet();
+                for (TinyVideoInfo info : set) {
+                    TinyCache.TinyCacheCallback cb = ivs.get(info);
+                    checkCb(url, info, target, status, cb);
+                }
+            }
+        }
+    }
+
+    protected static void checkCb(String url, TinyVideoInfo info,
+                                  File target, AjaxStatus status,
+                                  TinyCache.TinyCacheCallback cb) {
         if (null == info || null == cb) return;
 
         if (DEBUG) Log.d("yytest" , "checkCb matchUri = " + info.matchUri(url));

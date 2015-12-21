@@ -3,7 +3,7 @@ package com.vip.sdk.videolib;
 import android.net.Uri;
 import android.util.Log;
 
-import com.vip.sdk.videolib.autoplay.AutoPlayStrategy;
+import com.vip.sdk.videolib.autoplay.AutoLoadStrategy;
 import com.vip.sdk.videolib.autoplay.NetDependStrategy;
 import com.vip.sdk.videolib.download.SimpleTinyCache;
 import com.vip.sdk.videolib.download.TinyCache;
@@ -25,9 +25,9 @@ public abstract class TinyController {
 
     protected static final boolean DEBUG = TinyDebug.CONTROLLER;
 
-    private AutoPlayStrategy mAutoPlayStrategy;
+    private AutoLoadStrategy mAutoLoadStrategy;
     private TinyCache mTinyCache;
-    protected LinkedHashMap<TinyVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<TinyVideo, TinyVideoInfo>();
+    private LinkedHashMap<TinyVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<TinyVideo, TinyVideoInfo>();
 
     protected TinyController() {
     }
@@ -38,8 +38,8 @@ public abstract class TinyController {
     /**
      * 设置自动播放策略，默认为{@link NetDependStrategy}。
      */
-    public TinyController autoPlayStrategy(AutoPlayStrategy strategy) {
-        mAutoPlayStrategy = strategy;
+    public TinyController autoLoadStrategy(AutoLoadStrategy strategy) {
+        mAutoLoadStrategy = strategy;
         return this;
     }
 
@@ -61,24 +61,19 @@ public abstract class TinyController {
         }
     }
 
-    /**
-     * 视频缓存好时调用
-     */
-    protected abstract void onVideoPrepared(TinyVideoInfo videoInfo, String uri) ;
-
-    /**
-     * 视频缓存出错时调用
-     */
-    protected abstract void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) ;
-
     // internal
     // 转发来自TinyVideo的操作，确保形成闭环
-    protected void dispatchAttachVideo(TinyVideo video) {
+    // =============================================
+    // 接收来自TinyVideo的方法调用，经过处理后再转发到TinyVideo
+    // =============================================
+    protected TinyVideoInfo dispatchAttachVideo(TinyVideo video) {
         synchronized (mVideoInfoMap) {
-            if (mVideoInfoMap.containsKey(video)) {
-                return;
+            TinyVideoInfo info = mVideoInfoMap.get(video);
+            if (null == info) {
+                info = new TinyVideoInfo(this, video);
+                mVideoInfoMap.put(video, new TinyVideoInfo(this, video));
             }
-            mVideoInfoMap.put(video, new TinyVideoInfo(this, video));
+            return info;
         }
     }
 
@@ -95,41 +90,46 @@ public abstract class TinyController {
      * 转发来自视频的设置，由该处统一管理；
      * 尝试加载/缓存视频
      */
-    protected void dispatchFromVideoSetUri(TinyVideo video, Uri uri, Map<String, String> headers) {
-        TinyVideoInfo info;
-        synchronized (mVideoInfoMap) {
-            info = mVideoInfoMap.get(video);
-        }
+    protected void dispatchFromVideoSetUri(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
         // dispatchToVideoStop(info); // 无论如何先停止
         if (null != info) {
             info.headers = headers;
-            if (info.matchUri(uri)) {
-                if (null == info.playUri) {
-                    dispatchDownload(info, uri, headers);
-                } else {
-                    dispatchOnDownloadSuccess(info, String.valueOf(uri), info.playUri);
-                }
-            } else {
+            if (!info.matchUri(uri)) { // 如果URL不一样
                 info.uri = uri;
                 info.playUri = null;
-                dispatchDownload(info, uri, headers);
+            }
+            dispatchDownload(info, false);
+        }
+    }
+
+    /**
+     * {@link #dispatchFromVideoSetUri(TinyVideoInfo, Uri, Map)}操作中，
+     * 发现相应的uri还没有加载到playUri时将调用该方法
+     */
+    protected void dispatchDownload(TinyVideoInfo info, boolean force) {
+        if (null != info) {
+            if (force || getAutoPlayStrategy().autoLoad(info.video)) { // 如果允许自动加载播放，则往下执行
+                if (null == info.playUri) {
+                    getCache().load(info, mTinyCacheCallback);
+                } else {
+                    dispatchOnDownloadSuccess(info, String.valueOf(info.uri), info.playUri);
+                }
             }
         }
     }
 
-    /*package*/ void dispatchFromVideoStart(TinyVideo video) {
-        TinyVideoInfo info;
-        synchronized (mVideoInfoMap) {
-            info = mVideoInfoMap.get(video);
-        }
-        dispatchFromVideoStart(info);
-    }
-
+    /**
+     * 来自用户操作
+     */
     protected abstract void dispatchFromVideoStart(TinyVideoInfo info) ;
 
-    protected void dispatchDownload(TinyVideoInfo info, Uri uri, Map<String, String> headers) {
-        getCache().load(info, mTinyCacheCallback);
+    /**
+     * 来自用户操作
+     */
+    protected void dispatchFromVideoStop(TinyVideoInfo info) {
+        dispatchToVideoStop(info);
     }
+    // end
 
     protected void dispatchToVideoSetVideoURI(TinyVideoInfo info, Uri playUri) {
         if (null != info) {
@@ -145,7 +145,7 @@ public abstract class TinyController {
 
     protected void dispatchToVideoStop(TinyVideoInfo info) {
         if (null != info) {
-            info.video.stopPlayback();
+            info.video.innerStopPlayback();
         }
     }
 
@@ -156,14 +156,19 @@ public abstract class TinyController {
     }
     // end
 
+
+    // =============================================
+    // 下载的统一管理
+    // =============================================
     /**
-     * 指定视频组件是否仍被管理
+     * 视频缓存好时调用
      */
-    protected boolean isVideoAttached(TinyVideoInfo info) {
-        synchronized (mVideoInfoMap) {
-            return mVideoInfoMap.containsValue(info);
-        }
-    }
+    protected abstract void onVideoPrepared(TinyVideoInfo videoInfo, String uri) ;
+
+    /**
+     * 视频缓存出错时调用
+     */
+    protected abstract void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) ;
 
     protected void dispatchOnDownloadProgress(TinyVideoInfo info, String uri, long current, long total) {
         //TODO 分配下载进度
@@ -171,7 +176,7 @@ public abstract class TinyController {
 
     protected void dispatchOnDownloadSuccess(TinyVideoInfo info, String uri, Uri target) {
         if (DEBUG) Log.d("yytest", uri.substring(uri.lastIndexOf("/") + 1) + "下载好了");
-        if (info.attached() && info.matchUri(uri)) { // 过滤掉部分
+        if (info.using() && info.matchUri(uri)) { // 过滤掉部分
             info.playUri = target;
             onVideoPrepared(info, uri);
         }
@@ -200,19 +205,20 @@ public abstract class TinyController {
         }
 
     };
+    // end
 
-    public AutoPlayStrategy getAutoPlayStrategy() {
-        if (null == mAutoPlayStrategy) {
+    public AutoLoadStrategy getAutoPlayStrategy() {
+        if (null == mAutoLoadStrategy) {
             synchronized (this) {
-                if (null == mAutoPlayStrategy) { // 使用默认的
-                    mAutoPlayStrategy = createDefaultAutoPlayStrategy();
+                if (null == mAutoLoadStrategy) { // 使用默认的
+                    mAutoLoadStrategy = createDefaultAutoPlayStrategy();
                 }
             }
         }
-        return mAutoPlayStrategy;
+        return mAutoLoadStrategy;
     }
 
-    protected AutoPlayStrategy createDefaultAutoPlayStrategy() {
+    protected AutoLoadStrategy createDefaultAutoPlayStrategy() {
         return new NetDependStrategy();
     }
 

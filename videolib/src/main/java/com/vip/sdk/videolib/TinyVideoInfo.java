@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  *
- * 控制器中管理的视频信息
+ * 控制器中管理的视频信息，保持最新的状态
  *
  * <p/>
  * <p/>
@@ -28,7 +28,7 @@ public class TinyVideoInfo {
     public Uri playUri;
 
     /**
-     * 视频组件{@link TinyVideoImpl}
+     * 视频组件{@link TinyVideo}
      */
     public final TinyVideo video;
 
@@ -58,8 +58,8 @@ public class TinyVideoInfo {
         return ObjectUtils.equals(String.valueOf(this.playUri), uri);
     }
 
-    public boolean attached() {
-        return controller.isVideoAttached(this);
+    public boolean using() {
+        return null != video.myInfo();
     }
 
     @Override
@@ -73,6 +73,6 @@ public class TinyVideoInfo {
 
     @Override
     public String toString() {
-        return "video info = " + video;
+        return "video info { " + video + " }";
     }
 }

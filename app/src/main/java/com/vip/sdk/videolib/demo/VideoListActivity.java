@@ -2,6 +2,7 @@ package com.vip.sdk.videolib.demo;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.widget.ListView;
 
 import com.vip.sdk.videolib.TinyListController;
@@ -20,6 +21,10 @@ import butterknife.InjectView;
  * @since 1.0
  */
 public class VideoListActivity extends Activity {
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return super.onTouchEvent(event);
+    }
 
     @InjectView(R.id.list)
     ListView list;
@@ -55,6 +60,7 @@ public class VideoListActivity extends Activity {
             @Override
             public void onSuccess(MediaListInfo[] object) {
                 mAdapter.setData(object);
+                mController.determinePlay();
             }
         });
     }

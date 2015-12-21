@@ -53,19 +53,25 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
          * 资源已加载（全部或部分），已经可以播放。
          */
         int STATE_PREPARED = 1;
+
         /**
          * 开始播放（从停止或者暂停状态变为播放状态）
          */
         int STATE_START = 2;
+
         /**
          * 由播放状态变为暂停状态
          */
         int STATE_PAUSE = 3;
+
         /**
          * 进入停止状态（已播放完成）
          */
         int STATE_STOP = 4;
 
+        /**
+         * 当状态改变时回调
+         */
         void onStateChanged(TinyVideo video, int state);
 
         /**
@@ -86,15 +92,19 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     private MediaPlayer.OnPreparedListener mOnPreparedListener;
     private MediaPlayer.OnErrorListener mOnErrorListener;
 
-    protected float mSizeRatio = -1.0f;
-    protected TinyController mTinyController;
-    protected StateCallback mStateCallback;
-    protected Uri mUri;
-    protected Map<String, String> mHeaders;
-
-    protected boolean mAttachedToWindow;
     private TinyVideoImpl mVideoView;
     private LayoutParams mVideoViewLP;
+
+    private float mSizeRatio = -1.0f;
+    private StateCallback mStateCallback;
+
+    private boolean mAttachedToWindow;
+    private TinyController mTinyController;
+    private TinyVideoInfo mTinyVideoInfo;
+
+    // 防止代码创建对象，并设置Uri的情况
+    private Uri mUri;
+    private Map<String, String> mHeaders;
     public TinyVideo(Context context) {
         this(context, null);
     }
@@ -161,13 +171,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         detachTinyController(mTinyController);
     }
 
-    @Override
-    public void setVisibility(int visibility) {
-        if (isVideoAdded()) {
-            mVideoView.setVisibility(visibility);
-        }
-    }
-
     protected void addTinyVideo() {
         removeVideoView();
 
@@ -191,7 +194,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         mVideoView.setOnErrorListener(mErrorListener);
         mVideoView.setOnCompletionListener(mCompletionListener);
         addView(mVideoView, mVideoViewLP);
-        mVideoView.setVisibility(GONE);
     }
 
     protected void removeVideoView() {
@@ -212,6 +214,43 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
      */
     protected boolean isVideoAdded() {
         return getChildCount() > 0 && null != mVideoView;
+    }
+
+    /**
+     * 设置控制器
+     */
+    public void setTinyController(TinyController controller) {
+        if (mTinyController == controller) { // 如果是同一个对象，不进行处理
+            return;
+        }
+        detachTinyController(mTinyController);
+        mTinyController = controller;
+        attachTinyController(mTinyController);
+    }
+
+    private void attachTinyController(TinyController controller) {
+        if (null != controller) {
+            if (mAttachedToWindow) {
+                mTinyVideoInfo = controller.dispatchAttachVideo(this);
+            }
+            if (null != mUri) {
+                controller.dispatchFromVideoSetUri(myInfo(), mUri, mHeaders);
+            }
+        }
+    }
+
+    private void detachTinyController(TinyController controller) {
+        if (null != controller) {
+            controller.dispatchDetachVideo(this);
+        }
+        mTinyVideoInfo = null;
+    }
+
+    /**
+     * 通过该对象与{@link TinyListController}交互
+     */
+    /*package*/TinyVideoInfo myInfo() {
+        return mTinyVideoInfo;
     }
 
     /**
@@ -245,41 +284,29 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
      *
      * 将转发给控制器进行处理，此时并未准备播放
      */
+    @Override
     public void setVideoURICompat(Uri uri, Map<String, String> headers) {
         mUri = uri;
         mHeaders = headers;
         if (null != mTinyController) {
-            mTinyController.dispatchFromVideoSetUri(this, uri, mHeaders);
+            mTinyController.dispatchFromVideoSetUri(myInfo(), mUri, mHeaders);
         }
     }
 
-    /**
-     * 设置控制器
-     */
-    public void setTinyController(TinyController controller) {
-        if (mTinyController == controller) { // 如果是同一个对象，不进行处理
-            return;
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    /*package*/ void innerSetVideoURI(Uri uri) {
+        if (null == mTinyController) {
+            throw new UnsupportedOperationException("non TinyController supplied");
         }
-        detachTinyController(mTinyController);
-        mTinyController = controller;
-        attachTinyController(mTinyController);
-    }
-
-    private void attachTinyController(TinyController controller) {
-        if (null != controller) {
-            if (mAttachedToWindow) {
-                controller.dispatchAttachVideo(this);
-            }
-            if (null != mUri) {
-                controller.dispatchFromVideoSetUri(this, mUri, mHeaders);
-            }
+        if (!isVideoAdded()) {
+            addTinyVideo();
         }
-    }
-
-    private void detachTinyController(TinyController controller) {
-        if (null != controller) {
-            controller.dispatchDetachVideo(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mVideoView.setVideoURI(uri, null);
+        } else {
+            mVideoView.setVideoURI(uri);
         }
+        checkAndSend(MSG_SETURI, uri);
     }
 
     @Override
@@ -290,7 +317,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     @Override
     public void start() {
         if (isVideoAdded() && null != mTinyController) {
-            mTinyController.dispatchFromVideoStart(this);
+            mTinyController.dispatchFromVideoStart(myInfo());
         }
     }
 
@@ -313,17 +340,23 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         }
     }
 
-    @Override
-    public void suspend() {
-        if (isVideoAdded()) {
-            mVideoView.suspend();
-            removeVideoView();
-            checkAndSend(MSG_SUSPEND, null);
-        }
-    }
+//    @Override
+//    public void suspend() {
+//        if (isVideoAdded()) {
+//            mVideoView.suspend();
+//            removeVideoView();
+//            checkAndSend(MSG_SUSPEND, null);
+//        }
+//    }
 
     @Override
     public void stopPlayback() {
+        if (isVideoAdded() && null != mTinyController) {
+            mTinyController.dispatchFromVideoStop(myInfo());
+        }
+    }
+
+    /*package*/ void innerStopPlayback() {
         if (isVideoAdded()) {
             mVideoView.stopPlayback();
             removeVideoView();
@@ -373,22 +406,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
      */
     public float getSizeRatio() {
         return mSizeRatio;
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    /*package*/ void innerSetVideoURI(Uri uri) {
-        if (null == mTinyController) {
-            throw new UnsupportedOperationException("non TinyController supplied");
-        }
-        if (!isVideoAdded()) {
-            addTinyVideo();
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mVideoView.setVideoURI(uri, null);
-        } else {
-            mVideoView.setVideoURI(uri);
-        }
-        checkAndSend(MSG_SETURI, uri);
     }
 
     private void checkAndSend(int msg, Object param) {
@@ -507,7 +524,7 @@ interface VideoViewDelegate {
 
     void pause();
 
-    void suspend();
+//    void suspend();
 
     void stopPlayback();
 

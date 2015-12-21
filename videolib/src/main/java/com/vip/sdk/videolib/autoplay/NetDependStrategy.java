@@ -20,12 +20,12 @@ import com.vip.sdk.videolib.TinyVideo;
  *
  * @since 1.0
  */
-public class NetDependStrategy implements AutoPlayStrategy {
+public class NetDependStrategy implements AutoLoadStrategy {
 
     private ConnectivityManager mManager;
 
     @Override
-    public boolean autoPlay(TinyVideo video) {
+    public boolean autoLoad(TinyVideo video) {
         if (null == mManager) {
             mManager = (ConnectivityManager) video.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         }
