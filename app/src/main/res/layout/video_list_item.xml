@@ -62,4 +62,12 @@
         android:layout_centerInParent="true"
         />
 
+    <ProgressBar
+        android:id="@+id/overlay_progress_pb"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="2dp"
+        android:layout_alignParentBottom="true"
+        />
+
 </RelativeLayout>

@@ -14,7 +14,7 @@ public class TinyDebug {
     /**
      * debug controller
      */
-    public static boolean CONTROLLER = false;
+    public static boolean CONTROLLER = true;
 
     /**
      * debug controller

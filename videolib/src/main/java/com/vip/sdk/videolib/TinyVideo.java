@@ -201,6 +201,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         mVideoView.setOnPreparedListener(mPreparedListener);
         mVideoView.setOnErrorListener(mErrorListener);
         mVideoView.setOnCompletionListener(mCompletionListener);
+        mVideoView.setVisibility(GONE);
         addView(mVideoView, mVideoViewLP);
     }
 
@@ -314,6 +315,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         } else {
             mVideoView.setVideoURI(uri);
         }
+        mVideoView.setVisibility(VISIBLE);
         checkAndSend(MSG_SETURI, uri);
     }
 
@@ -370,6 +372,23 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
             removeVideoView();
         }
         checkAndSend(MSG_STOP, null);
+    }
+
+    @Override
+    public int getDuration() {
+        if (isVideoAdded()) {
+            return mVideoView.getDuration();
+        }
+
+        return -1;
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        if (isVideoAdded()) {
+            return mVideoView.getCurrentPosition();
+        }
+        return 0;
     }
 
     @Override
@@ -487,6 +506,9 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         @Override
         public void onPrepared(MediaPlayer mp) {
             if (DEBUG) Log.d("yytest", mUri + " prepared");
+            if (null != mTinyController) {
+                mTinyController.dispatchFromVideoPrepared(myInfo());
+            }
             checkAndSend(MSG_PREPARED, null);
             if (null != mOnPreparedListener) {
                 mOnPreparedListener.onPrepared(mp);
@@ -552,6 +574,8 @@ interface VideoViewDelegate {
 //    void suspend();
 
     void stopPlayback();
+    public int getDuration() ;
+    public int getCurrentPosition();
 
     public void setOnPreparedListener(MediaPlayer.OnPreparedListener l) ;
 

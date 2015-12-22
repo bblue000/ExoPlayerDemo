@@ -2,6 +2,7 @@ package com.vip.sdk.videolib.demo;
 
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -145,14 +146,16 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         holder.overlayPauseIv.setVisibility(View.GONE);
 
         holder.overlayLoadingPb.setVisibility(View.GONE);
+        holder.overlayProgressPb.setVisibility(View.GONE);
 
-        holder.video.setVisibility(View.GONE);
         holder.video.setTinyController(mTinyListController);
         holder.video.setVideoPath(info.videoUrl);
 //        holder.video.setMediaController(new MediaController(mContext));
         // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
 
         holder.video.setStateCallback(new TinyVideo.StateCallback() {
+            private CountDownTimer mTimer;
+
             @Override
             public void onStateChanged(TinyVideo video, int state) {
                 switch (state) {
@@ -165,11 +168,31 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
                         holder.overlayPlayIv.setVisibility(View.GONE);
                         holder.overlayPreviewIv.setVisibility(View.GONE);
                         holder.overlayPauseIv.setVisibility(View.VISIBLE);
-                        holder.video.setVisibility(View.VISIBLE);
+                        holder.overlayProgressPb.setVisibility(View.VISIBLE);
+                        holder.overlayProgressPb.setMax(100);
+                        if (null != mTimer) {
+                            mTimer.cancel();
+                        }
+                        mTimer = new CountDownTimer(holder.video.getDuration(), 1000) {
+                            @Override
+                            public void onTick(long millisUntilFinished) {
+                                holder.overlayProgressPb.setProgress((int)
+                                        (((float) holder.video.getCurrentPosition() / (float) holder.video.getDuration()) * 100));
+                            }
+
+                            @Override
+                            public void onFinish() {
+
+                            }
+                        };
+                        mTimer.start();
                         break;
                     case STATE_STOP:
                         holder.overlayPreviewIv.setVisibility(View.VISIBLE);
-                        holder.video.setVisibility(View.GONE);
+                        holder.overlayProgressPb.setVisibility(View.GONE);
+                        if (null != mTimer) {
+                            mTimer.cancel();
+                        }
                     case STATE_PAUSE:
                         holder.overlayLoadingPb.setVisibility(View.GONE);
                         holder.overlayPauseIv.setVisibility(View.GONE);
@@ -251,6 +274,8 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         TextView name_tv;
         @InjectView(R.id.overlay_loading_pb)
         ProgressBar overlayLoadingPb;
+        @InjectView(R.id.overlay_progress_pb)
+        ProgressBar overlayProgressPb;
 
         VideoHolder(View view) {
             ButterKnife.inject(this, view);

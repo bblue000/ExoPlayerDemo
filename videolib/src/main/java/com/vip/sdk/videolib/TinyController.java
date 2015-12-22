@@ -122,6 +122,11 @@ public abstract class TinyController {
     }
 
     /**
+     * 下载完成，准备播放
+     */
+    protected abstract void dispatchFromVideoPrepared(TinyVideoInfo info) ;
+
+    /**
      * 来自用户操作
      */
     protected abstract void dispatchFromVideoStart(TinyVideoInfo info) ;
@@ -166,7 +171,7 @@ public abstract class TinyController {
     /**
      * 视频缓存好时调用
      */
-    protected abstract void onVideoPrepared(TinyVideoInfo videoInfo, String uri) ;
+    protected abstract void onVideoDownloaded(TinyVideoInfo videoInfo, String uri) ;
 
     /**
      * 视频缓存出错时调用
@@ -181,7 +186,7 @@ public abstract class TinyController {
         if (DEBUG) Log.d("yytest", uri.substring(uri.lastIndexOf("/") + 1) + "下载好了");
         if (info.using() && info.matchUri(uri)) { // 过滤掉部分
             info.playUri = target;
-            onVideoPrepared(info, uri);
+            onVideoDownloaded(info, uri);
         }
     }
 
