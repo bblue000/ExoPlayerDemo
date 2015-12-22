@@ -37,7 +37,7 @@ public class MediaListManager {
 //    echo json_encode($data);
 
     public static void request(Context context, final Callback callback) {
-        new AQuery().ajax("http://10.101.54.106/test", MediaListInfo[].class, new AjaxCallback<MediaListInfo[]>() {
+        new AQuery().ajax("http://192.168.1.111/test", MediaListInfo[].class, new AjaxCallback<MediaListInfo[]>() {
             @Override
             public void callback(String url, MediaListInfo[] object, AjaxStatus status) {
                 callback.onSuccess(object);

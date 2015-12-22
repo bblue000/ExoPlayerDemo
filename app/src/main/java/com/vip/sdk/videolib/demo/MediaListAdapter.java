@@ -160,12 +160,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
                         holder.overlayLoadingPb.setVisibility(View.VISIBLE);
                         holder.overlayPlayIv.setVisibility(View.GONE);
                         break;
-                    case STATE_LACK_SURFACE:
-                        holder.overlayLoadingPb.setVisibility(View.VISIBLE);
-                        holder.overlayPlayIv.setVisibility(View.GONE);
-                        holder.video.setVisibility(View.INVISIBLE);
-                        break;
-                    case STATE_PREPARED:
+                    case STATE_START:
                         holder.overlayLoadingPb.setVisibility(View.GONE);
                         holder.overlayPlayIv.setVisibility(View.GONE);
                         holder.overlayPreviewIv.setVisibility(View.GONE);

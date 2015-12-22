@@ -52,14 +52,9 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         int STATE_LOADING = 0;
 
         /**
-         * 此时有必要显示或隐式地显示该控件，以便加载surface
-         */
-        int STATE_LACK_SURFACE = STATE_LOADING + 1;
-
-        /**
          * 资源已加载（全部或部分），已经可以播放。
          */
-        int STATE_PREPARED = STATE_LACK_SURFACE + 1;
+        int STATE_PREPARED = STATE_LOADING + 1;
 
         /**
          * 开始播放（一种是从停止或者暂停状态变为播放状态）。
@@ -108,8 +103,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     private boolean mAttachedToWindow;
     private TinyController mTinyController;
     private TinyVideoInfo mTinyVideoInfo;
-    private boolean mPrepared;
-    private boolean mPendingStart;
 
     // 防止代码创建对象，并设置Uri的情况
     private Uri mUri;
@@ -316,8 +309,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         if (!isVideoAdded()) {
             addTinyVideo();
         }
-        mPrepared = false;
-        mPendingStart = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mVideoView.setVideoURI(uri, null);
         } else {
@@ -344,12 +335,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         }
         mVideoView.start();
         checkAndSend(MSG_START, null);
-//        if (mPrepared) {
-//            checkAndSend(MSG_START, null);
-//        } else {
-//            mPendingStart = true;
-//            checkAndSend(MSG_LACK_SURFACE, null);
-//        }
     }
 
     @Override
@@ -450,8 +435,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     }
 
     private static final int MSG_LOADING = 0;
-    private static final int MSG_LACK_SURFACE = MSG_LOADING + 1;
-    private static final int MSG_PREPARED = MSG_LACK_SURFACE + 1;
+    private static final int MSG_PREPARED = MSG_LOADING + 1;
     private static final int MSG_START = MSG_PREPARED + 1;
     private static final int MSG_PAUSE = MSG_START + 1;
     private static final int MSG_STOP = MSG_PAUSE + 1;
@@ -465,11 +449,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
                 case MSG_LOADING:
                     if (null != mStateCallback) {
                         mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_LOADING);
-                    }
-                    break;
-                case MSG_LACK_SURFACE:
-                    if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_LACK_SURFACE);
                     }
                     break;
                 case MSG_PREPARED:
@@ -509,14 +488,6 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         public void onPrepared(MediaPlayer mp) {
             if (DEBUG) Log.d("yytest", mUri + " prepared");
             checkAndSend(MSG_PREPARED, null);
-
-//            if (!mPrepared) {
-//                mPrepared = true;
-//                if (mPendingStart) {
-//                    checkAndSend(MSG_START, null);
-//                    mPendingStart = false;
-//                }
-//            }
             if (null != mOnPreparedListener) {
                 mOnPreparedListener.onPrepared(mp);
             }
