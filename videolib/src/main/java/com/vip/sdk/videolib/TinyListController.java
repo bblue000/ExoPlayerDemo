@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
 
-import com.vip.sdk.base.BaseApplication;
 import com.vip.sdk.base.utils.ObjectUtils;
 
 import java.util.Map;
@@ -198,7 +197,9 @@ public class TinyListController extends TinyController implements AbsListView.On
             }
         }
         mPlaying.set(newToPlay, manual);
-        dispatchDownload(newToPlay, manual);
+        if (dispatchDownload(newToPlay, manual)) {
+            newToPlay.video.dispatchLoading();
+        }
     }
 
     protected Rect mTempRect = new Rect();
@@ -243,8 +244,6 @@ public class TinyListController extends TinyController implements AbsListView.On
         if (null == current.playUri) { // 如果当前的播放Uri尚未加载完成，直接返回
             return;
         }
-        // 如果已经下载完成，直接播放
-        current.video.dispatchLoading();
         if (DEBUG) Log.e("yytest", current.video + " start uri : " + current.uri);
         if (DEBUG) Log.w("yytest", current.video + " start play uri: " + getPlayUriFileName(current.playUri));
 
@@ -287,16 +286,16 @@ public class TinyListController extends TinyController implements AbsListView.On
     }
 
     @Override
-    protected void dispatchDownload(TinyVideoInfo info, boolean force) {
+    protected boolean dispatchDownload(TinyVideoInfo info, boolean force) {
         if (!mTouchScrollingLoad && mIsTouchScrolling) { // 如果触屏滑动，则不下载
             // if (DEBUG) Log.d("yytest", "touch scrolling....不下载");
-            return;
+            return false;
         }
         if (!mFlingLoad && mIsFling) { // 如果快速滑动，则不下载
             // if (DEBUG) Log.d("yytest", "fling....不下载");
-            return;
+            return false;
         }
-        super.dispatchDownload(info, force);
+        return super.dispatchDownload(info, force);
     }
 
     @Override

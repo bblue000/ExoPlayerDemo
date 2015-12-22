@@ -3,6 +3,7 @@ package com.vip.sdk.videolib;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -11,6 +12,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
@@ -50,24 +52,29 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         int STATE_LOADING = 0;
 
         /**
-         * 资源已加载（全部或部分），已经可以播放。
+         * 此时有必要显示或隐式地显示该控件，以便加载surface
          */
-        int STATE_PREPARED = 1;
+        int STATE_LACK_SURFACE = STATE_LOADING + 1;
 
         /**
-         * 开始播放（从停止或者暂停状态变为播放状态）
+         * 资源已加载（全部或部分），已经可以播放。
          */
-        int STATE_START = 2;
+        int STATE_PREPARED = STATE_LACK_SURFACE + 1;
+
+        /**
+         * 开始播放（一种是从停止或者暂停状态变为播放状态）。
+         */
+        int STATE_START = STATE_PREPARED + 1;
 
         /**
          * 由播放状态变为暂停状态
          */
-        int STATE_PAUSE = 3;
+        int STATE_PAUSE = STATE_START + 1;
 
         /**
          * 进入停止状态（已播放完成）
          */
-        int STATE_STOP = 4;
+        int STATE_STOP = STATE_PAUSE + 1;
 
         /**
          * 当状态改变时回调
@@ -101,6 +108,8 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     private boolean mAttachedToWindow;
     private TinyController mTinyController;
     private TinyVideoInfo mTinyVideoInfo;
+    private boolean mPrepared;
+    private boolean mPendingStart;
 
     // 防止代码创建对象，并设置Uri的情况
     private Uri mUri;
@@ -171,6 +180,11 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         detachTinyController(mTinyController);
     }
 
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+    }
+
     protected void addTinyVideo() {
         removeVideoView();
 
@@ -179,6 +193,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
             mVideoViewLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
             mVideoViewLP.addRule(CENTER_IN_PARENT);
+            mVideoView.getHolder().addCallback(mSurfaceCallback);
         }
         ViewGroup.LayoutParams parentLp = getLayoutParams();
         if (null != parentLp) {
@@ -301,6 +316,8 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         if (!isVideoAdded()) {
             addTinyVideo();
         }
+        mPrepared = false;
+        mPendingStart = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mVideoView.setVideoURI(uri, null);
         } else {
@@ -327,6 +344,12 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         }
         mVideoView.start();
         checkAndSend(MSG_START, null);
+//        if (mPrepared) {
+//            checkAndSend(MSG_START, null);
+//        } else {
+//            mPendingStart = true;
+//            checkAndSend(MSG_LACK_SURFACE, null);
+//        }
     }
 
     @Override
@@ -427,13 +450,14 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     }
 
     private static final int MSG_LOADING = 0;
-    private static final int MSG_PREPARED = 1;
-    private static final int MSG_START = 2;
-    private static final int MSG_PAUSE = 3;
-    private static final int MSG_STOP = 4;
-    private static final int MSG_SUSPEND = 5;
-    private static final int MSG_LOADEER = 6;
-    private static final int MSG_SETURI = 7;
+    private static final int MSG_LACK_SURFACE = MSG_LOADING + 1;
+    private static final int MSG_PREPARED = MSG_LACK_SURFACE + 1;
+    private static final int MSG_START = MSG_PREPARED + 1;
+    private static final int MSG_PAUSE = MSG_START + 1;
+    private static final int MSG_STOP = MSG_PAUSE + 1;
+    private static final int MSG_SUSPEND = MSG_STOP + 1;
+    private static final int MSG_LOADEER = MSG_SUSPEND + 1;
+    private static final int MSG_SETURI = MSG_LOADEER + 1;
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
@@ -441,6 +465,11 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
                 case MSG_LOADING:
                     if (null != mStateCallback) {
                         mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_LOADING);
+                    }
+                    break;
+                case MSG_LACK_SURFACE:
+                    if (null != mStateCallback) {
+                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_LACK_SURFACE);
                     }
                     break;
                 case MSG_PREPARED:
@@ -480,6 +509,14 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         public void onPrepared(MediaPlayer mp) {
             if (DEBUG) Log.d("yytest", mUri + " prepared");
             checkAndSend(MSG_PREPARED, null);
+
+//            if (!mPrepared) {
+//                mPrepared = true;
+//                if (mPendingStart) {
+//                    checkAndSend(MSG_START, null);
+//                    mPendingStart = false;
+//                }
+//            }
             if (null != mOnPreparedListener) {
                 mOnPreparedListener.onPrepared(mp);
             }
@@ -506,6 +543,23 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
                 }
             }
             return false;
+        }
+    };
+
+    private SurfaceHolder.Callback mSurfaceCallback = new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder holder) {
+            if (DEBUG) Log.d("yytest", "surfaceCreated");
+        }
+
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            if (DEBUG) Log.d("yytest", "surfaceChanged");
+        }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder holder) {
+            if (DEBUG) Log.d("yytest", "surfaceDestroyed");
         }
     };
 }

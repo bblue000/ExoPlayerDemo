@@ -106,16 +106,19 @@ public abstract class TinyController {
      * {@link #dispatchFromVideoSetUri(TinyVideoInfo, Uri, Map)}操作中，
      * 发现相应的uri还没有加载到playUri时将调用该方法
      */
-    protected void dispatchDownload(TinyVideoInfo info, boolean force) {
+    protected boolean dispatchDownload(TinyVideoInfo info, boolean force) {
         if (null != info) {
             if (null == info.playUri) {
                 if (force || getAutoPlayStrategy().autoLoad(info.video)) { // 如果允许自动加载播放，则往下执行
                     getCache().load(info, mTinyCacheCallback);
+                    return true;
                 }
             } else {
                 dispatchOnDownloadSuccess(info, String.valueOf(info.uri), info.playUri);
+                return true;
             }
         }
+        return false;
     }
 
     /**

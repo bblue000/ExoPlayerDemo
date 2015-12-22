@@ -34,11 +34,16 @@ import butterknife.InjectView;
  */
 public class MediaListAdapter extends BaseAdapter implements TinyListController.TinyListCallback {
 
+    public static final int VIEW_TYPE_IMAGE = 0;
+    public static final int VIEW_TYPE_VIDEO = 1;
+    public static final int VIEW_TYPE_COUNT = 2;
+
     private Context mContext;
     private LayoutInflater mInflater;
     private AQuery mAQuery;
     private List<MediaListInfo> mContent = new ArrayList<MediaListInfo>(20);
     private TinyListController mTinyListController;
+
     public MediaListAdapter(Context context) {
         mContext = context;
         mInflater = LayoutInflater.from(mContext);
@@ -61,6 +66,27 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
     }
 
     @Override
+    public int getViewTypeCount() {
+        return VIEW_TYPE_COUNT;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        MediaListInfo mediaListInfo = getItem(position);
+        return getItemViewType(mediaListInfo);
+    }
+
+    protected int getItemViewType(MediaListInfo mediaListInfo) {
+        switch (mediaListInfo.type) {
+            case MediaListInfo.TYPE_VIDEO:
+                return VIEW_TYPE_VIDEO;
+            case MediaListInfo.TYPE_IMAGE:
+            default:
+                return VIEW_TYPE_IMAGE;
+        }
+    }
+
+    @Override
     public int getCount() {
         return mContent.size();
     }
@@ -77,19 +103,43 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        MediaListInfo mediaListInfo = getItem(position);
+        switch (getItemViewType(mediaListInfo)) {
+            case VIEW_TYPE_VIDEO:
+                return getVideoView(position, mediaListInfo, convertView, parent);
+            case VIEW_TYPE_IMAGE:
+                return getImageView(position, mediaListInfo, convertView, parent);
+        }
+        return null;
+
+    }
+
+    protected View getImageView(int position, MediaListInfo info, View convertView, ViewGroup parent) {
+        if (null == convertView) {
+            convertView = mInflater.inflate(R.layout.image_list_item, parent, false);
+            convertView.setTag(new ImageHolder(convertView));
+        }
+        final ImageHolder holder = (ImageHolder) convertView.getTag();
+        mAQuery.id(holder.imageIv).image(info.previewImage, true, true, 0, 0, null,
+                AQuery.FADE_IN, AQuery.RATIO_PRESERVE);
+        return convertView;
+    }
+
+    protected View getVideoView(int position, MediaListInfo info, View convertView, ViewGroup parent) {
         if (null == convertView) {
             convertView = mInflater.inflate(R.layout.video_list_item, parent, false);
-            convertView.setTag(new ViewHolder(convertView));
+            convertView.setTag(new VideoHolder(convertView));
         }
 
-        final ViewHolder holder = (ViewHolder) convertView.getTag();
-        final MediaListInfo info = getItem(position);
+        final VideoHolder holder = (VideoHolder) convertView.getTag();
 
         holder.name_tv.setText(info.title);
 
         // 加载预览图片
         holder.overlayPreviewIv.setVisibility(View.VISIBLE);
-        mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true);
+        // mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true);
+        mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true, 0, 0, null,
+                AQuery.FADE_IN, AQuery.RATIO_PRESERVE);
 
         holder.overlayPlayIv.setVisibility(View.VISIBLE);
         holder.overlayPauseIv.setVisibility(View.GONE);
@@ -100,7 +150,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         holder.video.setTinyController(mTinyListController);
         holder.video.setVideoPath(info.videoUrl);
 //        holder.video.setMediaController(new MediaController(mContext));
-        Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
+        // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
 
         holder.video.setStateCallback(new TinyVideo.StateCallback() {
             @Override
@@ -110,7 +160,12 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
                         holder.overlayLoadingPb.setVisibility(View.VISIBLE);
                         holder.overlayPlayIv.setVisibility(View.GONE);
                         break;
-                    case STATE_START:
+                    case STATE_LACK_SURFACE:
+                        holder.overlayLoadingPb.setVisibility(View.VISIBLE);
+                        holder.overlayPlayIv.setVisibility(View.GONE);
+                        holder.video.setVisibility(View.INVISIBLE);
+                        break;
+                    case STATE_PREPARED:
                         holder.overlayLoadingPb.setVisibility(View.GONE);
                         holder.overlayPlayIv.setVisibility(View.GONE);
                         holder.overlayPreviewIv.setVisibility(View.GONE);
@@ -160,7 +215,26 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
 
     @Override
     public TinyVideo getTinyVideo(int position, View convertView) {
-        return ((ViewHolder) convertView.getTag()).video;
+        Object tag = convertView.getTag();
+        if (tag instanceof VideoHolder) {
+            return ((VideoHolder) tag).video;
+        }
+        return null;
+    }
+
+    /**
+     * This class contains all butterknife-injected Views & Layouts from layout file 'image_item.xml'
+     * for easy to all layout elements.
+     *
+     * @author ButterKnifeZelezny, plugin for Android Studio by Avast Developers (http://github.com/avast)
+     */
+    static class ImageHolder {
+        @InjectView(R.id.image_iv)
+        ImageView imageIv;
+
+        ImageHolder(View view) {
+            ButterKnife.inject(this, view);
+        }
     }
 
     /**
@@ -169,7 +243,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
      *
      * @author ButterKnifeZelezny, plugin for Android Studio by Avast Developers (http://github.com/avast)
      */
-    static class ViewHolder {
+    static class VideoHolder {
         @InjectView(R.id.video)
         TinyVideo video;
         @InjectView(R.id.overlay_preview_iv)
@@ -183,7 +257,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         @InjectView(R.id.overlay_loading_pb)
         ProgressBar overlayLoadingPb;
 
-        ViewHolder(View view) {
+        VideoHolder(View view) {
             ButterKnife.inject(this, view);
         }
     }

@@ -37,7 +37,7 @@ public class VideoListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.video_list);
+        setContentView(R.layout.media_list);
         ButterKnife.inject(this);
 
         initView();
