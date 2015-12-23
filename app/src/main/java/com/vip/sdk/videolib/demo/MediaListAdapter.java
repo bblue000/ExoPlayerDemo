@@ -7,6 +7,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -154,6 +156,11 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
 
         holder.video.setStateCallback(new TinyVideo.StateCallback() {
+            private Animation mAnim;
+            {
+                mAnim = new AlphaAnimation(1.0f, 0f);
+                mAnim.setDuration(500);
+            }
             private CountDownTimer mTimer;
 
             @Override
@@ -166,6 +173,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
                     case STATE_START:
                         holder.overlayLoadingPb.setVisibility(View.GONE);
                         holder.overlayPlayIv.setVisibility(View.GONE);
+                        holder.overlayPreviewIv.startAnimation(mAnim);
                         holder.overlayPreviewIv.setVisibility(View.GONE);
                         holder.overlayPauseIv.setVisibility(View.VISIBLE);
                         holder.overlayProgressPb.setVisibility(View.VISIBLE);

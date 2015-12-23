@@ -65,6 +65,11 @@ public class TinyListController extends TinyController implements AbsListView.On
             }
         }
 
+        public void forceStop() {
+            stopPrevious(info);
+            reset();
+        }
+
         public void reset() {
             info = null;
             url = null;
@@ -111,6 +116,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     // 也可以调用dispatchXXX方法转发外部的OnScrollListener
     public void dispatchOnScrollStateChanged(AbsListView view, int scrollState) {
         // if (DEBUG) Log.d("yytest", "dispatch scroll....");
+        checkCurrentPlayInViewport();
         mIsFling = false;
         mIsTouchScrolling = false;
         switch (scrollState) {
@@ -131,6 +137,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     public void dispatchOnScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
                          int totalItemCount) {
         // if (DEBUG) Log.d("yytest", "dispatch scroll....");
+        checkCurrentPlayInViewport();
     }
 
     @Override
@@ -202,6 +209,15 @@ public class TinyListController extends TinyController implements AbsListView.On
         }
     }
 
+    protected void checkCurrentPlayInViewport() {
+        if (!mPlaying.isset()) {
+            return;
+        }
+        if (!isInViewport(mPlaying.info.video, mListView)) {
+            mPlaying.forceStop();
+        }
+    }
+
     protected Rect mTempRect = new Rect();
     protected int[] mTempLoc = new int[2];
     /**
@@ -230,6 +246,18 @@ public class TinyListController extends TinyController implements AbsListView.On
             }
         }
         return null;
+    }
+
+    /**
+     * 查找当前状态下的可播放项
+     */
+    protected boolean isInViewport(TinyVideo video, ListView listView) {
+        if (null == video || null == video.myInfo() || !listView.getGlobalVisibleRect(mTempRect)) { // 没有可显示的区域
+            return false;
+        }
+        final int top = mTempRect.top;
+        video.getLocationOnScreen(mTempLoc);
+        return mTempLoc[1] + video.getHeight() > top;
     }
 
     /**
@@ -308,9 +336,10 @@ public class TinyListController extends TinyController implements AbsListView.On
     protected void dispatchFromVideoPrepared(TinyVideoInfo info) {
         if (mPlaying.match(info) && null != mPlaying.info.playUri) {
             mPlaying.prepared = true;
-            if (!mHandler.hasMessages(0)) {
+            mHandler.removeMessages(0);
+//            if (!mHandler.hasMessages(0)) {
                 playCurrentDelayed(info);
-            }
+//            }
         }
     }
 

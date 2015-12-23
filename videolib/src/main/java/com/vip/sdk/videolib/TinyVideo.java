@@ -187,6 +187,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
                     ViewGroup.LayoutParams.MATCH_PARENT);
             mVideoViewLP.addRule(CENTER_IN_PARENT);
             mVideoView.getHolder().addCallback(mSurfaceCallback);
+            mVideoView.setBackgroundColor(0);
         }
         ViewGroup.LayoutParams parentLp = getLayoutParams();
         if (null != parentLp) {
