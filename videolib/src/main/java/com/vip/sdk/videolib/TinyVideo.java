@@ -16,6 +16,8 @@ import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.vip.sdk.uilib.video.LoadErrInfo;
+
 import java.util.Map;
 
 /**

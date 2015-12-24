@@ -20,9 +20,9 @@
         android:layout_height="wrap_content">
 
         <VideoView
+            android:id="@+id/vv"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"/>
+            android:layout_height="wrap_content"/>
 
     </RelativeLayout>
 

@@ -8,7 +8,7 @@
         android:icon="@drawable/ic_launcher" android:theme="@style/AppTheme"
         android:name=".App">
 
-        <activity android:name="com.vip.sdk.videolib.demo.VideoListActivity"
+        <activity android:name=".Test"
             android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

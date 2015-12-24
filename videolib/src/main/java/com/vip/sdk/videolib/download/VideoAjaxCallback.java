@@ -10,7 +10,7 @@ import com.androidquery.callback.AjaxStatus;
 import com.androidquery.util.AQUtility;
 import com.vip.sdk.base.file.FileManagerUtils;
 import com.vip.sdk.base.utils.ObjectUtils;
-import com.vip.sdk.videolib.LoadErrInfo;
+import com.vip.sdk.uilib.video.LoadErrInfo;
 import com.vip.sdk.videolib.TinyDebug;
 import com.vip.sdk.videolib.TinyVideoInfo;
 

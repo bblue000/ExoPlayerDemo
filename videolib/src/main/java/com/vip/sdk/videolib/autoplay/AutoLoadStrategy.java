@@ -4,7 +4,7 @@ import com.vip.sdk.videolib.TinyVideo;
 
 /**
  *
- * 视频自动加载播放策略。
+ * 针对需要网络加载的视频，自动加载播放策略。
  *
  * <br/>
  *

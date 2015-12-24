@@ -3,6 +3,7 @@ package com.vip.sdk.videolib;
 import android.net.Uri;
 import android.util.Log;
 
+import com.vip.sdk.uilib.video.LoadErrInfo;
 import com.vip.sdk.videolib.autoplay.AutoLoadStrategy;
 import com.vip.sdk.videolib.autoplay.NetDependStrategy;
 import com.vip.sdk.videolib.download.SimpleTinyCache;

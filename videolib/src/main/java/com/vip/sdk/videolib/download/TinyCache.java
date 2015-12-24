@@ -3,7 +3,7 @@ package com.vip.sdk.videolib.download;
 import android.content.Context;
 import android.net.Uri;
 
-import com.vip.sdk.videolib.LoadErrInfo;
+import com.vip.sdk.uilib.video.LoadErrInfo;
 import com.vip.sdk.videolib.TinyVideoInfo;
 
 import java.io.File;

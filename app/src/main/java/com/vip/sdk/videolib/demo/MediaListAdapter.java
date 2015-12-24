@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.vip.sdk.base.utils.ToastUtils;
-import com.vip.sdk.videolib.LoadErrInfo;
+import com.vip.sdk.uilib.video.LoadErrInfo;
 import com.vip.sdk.videolib.TinyListController;
 import com.vip.sdk.videolib.TinyVideo;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;

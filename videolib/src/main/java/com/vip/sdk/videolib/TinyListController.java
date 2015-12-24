@@ -12,6 +12,7 @@ import android.widget.AbsListView;
 import android.widget.ListView;
 
 import com.vip.sdk.base.utils.ObjectUtils;
+import com.vip.sdk.uilib.video.LoadErrInfo;
 
 import java.util.Map;
 

@@ -43,29 +43,31 @@ public class Test extends Activity {
 
 
         rlt = (RelativeLayout) findViewById(R.id.rlt);
-//        vv = (VideoView) findViewById(R.id.vv);
+        vv = (VideoView) findViewById(R.id.vv);
 
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
+//        final Handler handler = new Handler();
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                vv = new VideoView(Test.this);
+//                rlt.addView(vv, new ViewGroup.LayoutParams(-1, -1));
+//                vv.setVideoPath("http://192.168.1.107/public/vip1.mp4");
+//                vv.start();
+//
+//                handler.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        vv.setVideoPath("http://192.168.1.107/public/vip2.mp4");
+//                    }
+//                }, 5000L);
+//            }
+//        }, 1000);
 
-                vv = new VideoView(Test.this);
-                rlt.addView(vv, new ViewGroup.LayoutParams(-1, -1));
-                vv.setVideoPath("http://192.168.1.107/public/vip1.mp4");
-                vv.start();
+        vv.setVideoPath("file:///android_asset/vip1.mp4");
+        vv.start();
 
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        vv.setVideoPath("http://192.168.1.107/public/vip2.mp4");
-                    }
-                }, 5000L);
-            }
-        }, 1000);
-
-
-        final File file = new File(Environment.getExternalStorageDirectory(), "yytest");
+//        final File file = new File(Environment.getExternalStorageDirectory(), "yytest");
 //        vv.setVideoURI(Uri.fromFile(file));
 //        vv.start();
 

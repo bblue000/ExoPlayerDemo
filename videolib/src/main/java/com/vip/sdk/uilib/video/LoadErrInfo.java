@@ -1,4 +1,4 @@
-package com.vip.sdk.videolib;
+package com.vip.sdk.uilib.video;
 
 /**
  *
