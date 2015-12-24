@@ -3,7 +3,7 @@ package com.vip.sdk.videolib;
 import android.net.Uri;
 import android.util.Log;
 
-import com.vip.sdk.uilib.video.LoadErrInfo;
+import com.vip.sdk.uilib.video.VideoStateInfo;
 import com.vip.sdk.videolib.autoplay.AutoLoadStrategy;
 import com.vip.sdk.videolib.autoplay.NetDependStrategy;
 import com.vip.sdk.videolib.download.SimpleTinyCache;
@@ -28,7 +28,7 @@ public abstract class TinyController {
 
     private AutoLoadStrategy mAutoLoadStrategy;
     private TinyCache mTinyCache;
-    private LinkedHashMap<TinyVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<TinyVideo, TinyVideoInfo>();
+    private LinkedHashMap<VIPVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<VIPVideo, TinyVideoInfo>();
 
     protected TinyController() {
     }
@@ -67,7 +67,7 @@ public abstract class TinyController {
     // =============================================
     // 接收来自TinyVideo的方法调用，经过处理后再转发到TinyVideo
     // =============================================
-    protected TinyVideoInfo dispatchAttachVideo(TinyVideo video) {
+    protected TinyVideoInfo dispatchAttachVideo(VIPVideo video) {
         synchronized (mVideoInfoMap) {
             TinyVideoInfo info = mVideoInfoMap.get(video);
             if (null == info) {
@@ -81,7 +81,7 @@ public abstract class TinyController {
     /**
      * 将指定的video从控制器中移除，不再对其进行管理
      */
-    protected void dispatchDetachVideo(TinyVideo video) {
+    protected void dispatchDetachVideo(VIPVideo video) {
         synchronized (mVideoInfoMap) {
             mVideoInfoMap.remove(video);
         }
@@ -158,7 +158,7 @@ public abstract class TinyController {
         }
     }
 
-    protected void dispatchToVideoLoadErr(TinyVideoInfo info, String uri, LoadErrInfo status) {
+    protected void dispatchToVideoLoadErr(TinyVideoInfo info, String uri, VideoStateInfo status) {
         if (null != info) {
             info.video.dispatchLoadErr(status);
         }
@@ -177,7 +177,7 @@ public abstract class TinyController {
     /**
      * 视频缓存出错时调用
      */
-    protected abstract void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) ;
+    protected abstract void onVideoLoadFailed(TinyVideoInfo info, String uri, VideoStateInfo status) ;
 
     protected void dispatchOnDownloadProgress(TinyVideoInfo info, String uri, long current, long total) {
         //TODO 分配下载进度
@@ -191,7 +191,7 @@ public abstract class TinyController {
         }
     }
 
-    protected void dispatchOnDownloadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
+    protected void dispatchOnDownloadFailed(TinyVideoInfo info, String uri, VideoStateInfo status) {
         if (DEBUG) Log.d("yytest", uri.substring(uri.lastIndexOf("/") + 1) + "下载失败了");
         onVideoLoadFailed(info, uri, status);
     }
@@ -209,7 +209,7 @@ public abstract class TinyController {
         }
 
         @Override
-        public void onFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
+        public void onFailed(TinyVideoInfo info, String uri, VideoStateInfo status) {
             dispatchOnDownloadFailed(info, uri, status);
         }
 

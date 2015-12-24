@@ -4,7 +4,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import com.vip.sdk.videolib.TinyVideo;
+import com.vip.sdk.videolib.VIPVideo;
 
 /**
  *
@@ -25,7 +25,7 @@ public class NetDependStrategy implements AutoLoadStrategy {
     private ConnectivityManager mManager;
 
     @Override
-    public boolean autoLoad(TinyVideo video) {
+    public boolean autoLoad(VIPVideo video) {
         if (null == mManager) {
             mManager = (ConnectivityManager) video.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         }

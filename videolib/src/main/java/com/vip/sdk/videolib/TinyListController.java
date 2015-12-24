@@ -12,7 +12,7 @@ import android.widget.AbsListView;
 import android.widget.ListView;
 
 import com.vip.sdk.base.utils.ObjectUtils;
-import com.vip.sdk.uilib.video.LoadErrInfo;
+import com.vip.sdk.uilib.video.VideoStateInfo;
 
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class TinyListController extends TinyController implements AbsListView.On
         /**
          * 如果不是含有视频的项，返回null；如果是还有视频的项，则返回{@link TinyVideoImpl}
          */
-        TinyVideo getTinyVideo(int position, View convertView);
+        VIPVideo getTinyVideo(int position, View convertView);
     }
 
     protected class PlayInfo {
@@ -178,7 +178,7 @@ public class TinyListController extends TinyController implements AbsListView.On
             return;
         }
 
-        TinyVideo video = findCurrentPlayVideo(mListView);
+        VIPVideo video = findCurrentPlayVideo(mListView);
         TinyVideoInfo newToPlay = null;
         if (null != video) {
             newToPlay = video.myInfo();
@@ -224,7 +224,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     /**
      * 查找当前状态下的可播放项
      */
-    protected TinyVideo findCurrentPlayVideo(ListView listView) {
+    protected VIPVideo findCurrentPlayVideo(ListView listView) {
         if (!listView.getGlobalVisibleRect(mTempRect)) { // 没有可显示的区域
             return null;
         }
@@ -240,7 +240,7 @@ public class TinyListController extends TinyController implements AbsListView.On
             if (childTop < top) continue;
             if (childTop > middle) break;
 
-            TinyVideo video = mTinyListCallback.getTinyVideo(firstItemPos + i, child);
+            VIPVideo video = mTinyListCallback.getTinyVideo(firstItemPos + i, child);
             if (null != video) {
                 if (DEBUG) Log.w("yytest", "当前播放的项：" + (firstItemPos + i + 1));
                 return video;
@@ -252,7 +252,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     /**
      * 查找当前状态下的可播放项
      */
-    protected boolean isInViewport(TinyVideo video, ListView listView) {
+    protected boolean isInViewport(VIPVideo video, ListView listView) {
         if (null == video || null == video.myInfo() || !listView.getGlobalVisibleRect(mTempRect)) { // 没有可显示的区域
             return false;
         }
@@ -353,7 +353,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     }
 
     @Override
-    protected void onVideoLoadFailed(TinyVideoInfo info, String uri, LoadErrInfo status) {
+    protected void onVideoLoadFailed(TinyVideoInfo info, String uri, VideoStateInfo status) {
         if (mPlaying.match(info, uri) && null == mPlaying.info.playUri) {
             // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
             dispatchToVideoLoadErr(mPlaying.info, uri, status);

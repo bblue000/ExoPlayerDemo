@@ -5,7 +5,7 @@
     android:layout_height="200dp"
     android:background="@android:color/black">
 
-    <com.vip.sdk.videolib.TinyVideo
+    <com.vip.sdk.videolib.VIPVideo
         android:id="@+id/video"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

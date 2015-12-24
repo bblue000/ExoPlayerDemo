@@ -16,7 +16,7 @@ import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-import com.vip.sdk.uilib.video.LoadErrInfo;
+import com.vip.sdk.uilib.video.VideoStateInfo;
 
 import java.util.Map;
 
@@ -35,7 +35,7 @@ import java.util.Map;
  *
  * @since 1.0
  */
-public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
+public class VIPVideo extends RelativeLayout implements VideoViewDelegate {
 
     private static final boolean DEBUG = TinyDebug.CONTROLLER;
 
@@ -76,20 +76,20 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         /**
          * 当状态改变时回调
          */
-        void onStateChanged(TinyVideo video, int state);
+        void onStateChanged(VIPVideo video, int state);
 
         /**
          * 资源加载失败
          */
-        void onLoadErr(TinyVideo video, LoadErrInfo status);
+        void onLoadErr(VIPVideo video, VideoStateInfo status);
     }
 
     /**
-     * {@link com.vip.sdk.videolib.TinyVideo.StateCallback}的缺省子类，所有方法都是空实现
+     * {@link com.vip.sdk.videolib.VIPVideo.StateCallback}的缺省子类，所有方法都是空实现
      */
     public static class SimpleStateCallback implements StateCallback {
-        @Override public void onStateChanged(TinyVideo video, int state) { }
-        @Override public void onLoadErr(TinyVideo video, LoadErrInfo status) { }
+        @Override public void onStateChanged(VIPVideo video, int state) { }
+        @Override public void onLoadErr(VIPVideo video, VideoStateInfo status) { }
     }
 
     private MediaPlayer.OnCompletionListener mOnCompletionListener;
@@ -109,22 +109,22 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
     // 防止代码创建对象，并设置Uri的情况
     private Uri mUri;
     private Map<String, String> mHeaders;
-    public TinyVideo(Context context) {
+    public VIPVideo(Context context) {
         this(context, null);
     }
 
-    public TinyVideo(Context context, AttributeSet attrs) {
+    public VIPVideo(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TinyVideo(Context context, AttributeSet attrs, int defStyleAttr) {
+    public VIPVideo(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initTinyVideoContainer(context, attrs, defStyleAttr);
     }
 
     private void initTinyVideoContainer(Context context, AttributeSet attrs, int defStyleAttr) {
-        final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TinyVideo, defStyleAttr, 0);
-        mSizeRatio = a.getFloat(R.styleable.TinyVideo_sizeRatio, -1.0f);
+        final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.VIPVideo, defStyleAttr, 0);
+        mSizeRatio = a.getFloat(R.styleable.VIPVideo_sizeRatio, -1.0f);
         a.recycle();
     }
 
@@ -452,7 +452,7 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
         checkAndSend(MSG_LOADING, null);
     }
 
-    protected void dispatchLoadErr(LoadErrInfo info) {
+    protected void dispatchLoadErr(VideoStateInfo info) {
         checkAndSend(MSG_LOADEER, info);
     }
 
@@ -470,33 +470,33 @@ public class TinyVideo extends RelativeLayout implements VideoViewDelegate {
             switch (msg.what) {
                 case MSG_LOADING:
                     if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_LOADING);
+                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_LOADING);
                     }
                     break;
                 case MSG_PREPARED:
                     if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_PREPARED);
+                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_PREPARED);
                     }
                     break;
                 case MSG_START:
                     if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_START);
+                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_START);
                     }
                     break;
                 case MSG_PAUSE:
                     if (null != mStateCallback) {
-                            mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_PAUSE);
+                            mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_PAUSE);
                     }
                     break;
                 case MSG_SUSPEND:
                 case MSG_STOP:
                     if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(TinyVideo.this, StateCallback.STATE_STOP);
+                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_STOP);
                     }
                     break;
                 case MSG_LOADEER:
                     if (null != mStateCallback) {
-                        mStateCallback.onLoadErr(TinyVideo.this, (LoadErrInfo) msg.obj);
+                        mStateCallback.onLoadErr(VIPVideo.this, (VideoStateInfo) msg.obj);
                     }
                     break;
                 case MSG_SETURI:

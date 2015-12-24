@@ -10,7 +10,7 @@ import com.androidquery.callback.AjaxStatus;
 import com.androidquery.util.AQUtility;
 import com.vip.sdk.base.file.FileManagerUtils;
 import com.vip.sdk.base.utils.ObjectUtils;
-import com.vip.sdk.uilib.video.LoadErrInfo;
+import com.vip.sdk.uilib.video.VideoStateInfo;
 import com.vip.sdk.videolib.TinyDebug;
 import com.vip.sdk.videolib.TinyVideoInfo;
 
@@ -87,7 +87,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
      */
     public static void download(TinyVideoInfo tinyVideoInfo, TinyCache.TinyCacheCallback callback) {
         if (null == tinyVideoInfo || null == tinyVideoInfo.uri) { // 容错处理
-            callback.onFailed(tinyVideoInfo, "", new LoadErrInfo(-1, "null"));
+            callback.onFailed(tinyVideoInfo, "", new VideoStateInfo(-1, "null"));
             return;
         }
 
@@ -419,7 +419,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
             if (null != target) {
                 cb.onSuccess(info, url, Uri.fromFile(target));
             } else {
-                cb.onFailed(info, url, new LoadErrInfo(status.getCode(), status.getMessage()));
+                cb.onFailed(info, url, new VideoStateInfo(status.getCode(), status.getMessage()));
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.vip.sdk.videolib.autoplay;
 
-import com.vip.sdk.videolib.TinyVideo;
+import com.vip.sdk.videolib.VIPVideo;
 
 /**
  *
@@ -21,6 +21,6 @@ public interface AutoLoadStrategy {
     /**
      * @return 指定的<code>video</code>是否能自动加载播放
      */
-    boolean autoLoad(TinyVideo video);
+    boolean autoLoad(VIPVideo video);
 
 }

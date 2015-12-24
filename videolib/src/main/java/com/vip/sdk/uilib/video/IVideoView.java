@@ -99,7 +99,7 @@ public interface IVideoView {
      *
      * <br/>
      *
-     * 如果已经开始播放，则在设置时将会调用{@link #STATE_START}。
+     * 特别注意：如果已经开始播放，则在设置时将会调用{@link #STATE_START}。
      */
     interface StateCallback {
 
@@ -109,9 +109,14 @@ public interface IVideoView {
         int STATE_LOADING = 0;
 
         /**
+         * 加载资源失败，包含错误信息
+         */
+        int STATE_LOAD_ERR = STATE_LOADING + 1;
+
+        /**
          * 资源已加载（全部或部分），已经可以播放。
          */
-        int STATE_PREPARED = STATE_LOADING + 1;
+        int STATE_PREPARED = STATE_LOAD_ERR + 1;
 
         /**
          * 开始播放（一种是从停止或者暂停状态变为播放状态）。
@@ -129,21 +134,16 @@ public interface IVideoView {
         int STATE_STOP = STATE_PAUSE + 1;
 
         /**
-         * 当状态改变时回调
+         * {@link android.media.MediaPlayer}内部异步操作时发生错误，包含错误信息
          */
-        void onStateChanged(IVideoView video, int state);
+        int STATE_ERR = STATE_STOP + 1;
 
         /**
-         * 资源加载失败
+         * 当状态改变时回调
+         *
+         * @param status 有的状态包含状态信息，将在触发相应状态时给出，参见不同状态说明
          */
-        void onLoadErr(IVideoView video, LoadErrInfo status);
+        void onStateChanged(IVideoView video, int state, VideoStateInfo status);
     }
 
-    /**
-     * {@link StateCallback}的缺省子类，所有方法都是空实现
-     */
-    class SimpleStateCallback implements StateCallback {
-        @Override public void onStateChanged(IVideoView video, int state) { }
-        @Override public void onLoadErr(IVideoView video, LoadErrInfo status) { }
-    }
 }

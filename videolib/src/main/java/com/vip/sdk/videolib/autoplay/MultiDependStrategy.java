@@ -1,6 +1,6 @@
 package com.vip.sdk.videolib.autoplay;
 
-import com.vip.sdk.videolib.TinyVideo;
+import com.vip.sdk.videolib.VIPVideo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ public class MultiDependStrategy implements AutoLoadStrategy {
     }
 
     @Override
-    public boolean autoLoad(TinyVideo video) {
+    public boolean autoLoad(VIPVideo video) {
         if (null == mOthers) {
             return false;
         }
