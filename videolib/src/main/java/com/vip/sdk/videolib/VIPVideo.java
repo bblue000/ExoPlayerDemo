@@ -16,7 +16,9 @@ import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-import com.vip.sdk.uilib.video.VideoStateInfo;
+import com.vip.sdk.uilib.media.video.IVideoView;
+import com.vip.sdk.uilib.media.video.VIPVideoDebug;
+import com.vip.sdk.uilib.media.video.VideoState;
 
 import java.util.Map;
 
@@ -35,62 +37,9 @@ import java.util.Map;
  *
  * @since 1.0
  */
-public class VIPVideo extends RelativeLayout implements VideoViewDelegate {
+public class VIPVideo extends RelativeLayout implements IVideoView {
 
-    private static final boolean DEBUG = TinyDebug.CONTROLLER;
-
-    /**
-     * 播放状态的回调。
-     *
-     * <br/>
-     *
-     * 如果已经开始播放，则在设置时将会调用{@link #STATE_START}。
-     */
-    public interface StateCallback {
-
-        /**
-         * 加载资源（全部或部分），此时还不能播放
-         */
-        int STATE_LOADING = 0;
-
-        /**
-         * 资源已加载（全部或部分），已经可以播放。
-         */
-        int STATE_PREPARED = STATE_LOADING + 1;
-
-        /**
-         * 开始播放（一种是从停止或者暂停状态变为播放状态）。
-         */
-        int STATE_START = STATE_PREPARED + 1;
-
-        /**
-         * 由播放状态变为暂停状态
-         */
-        int STATE_PAUSE = STATE_START + 1;
-
-        /**
-         * 进入停止状态（已播放完成）
-         */
-        int STATE_STOP = STATE_PAUSE + 1;
-
-        /**
-         * 当状态改变时回调
-         */
-        void onStateChanged(VIPVideo video, int state);
-
-        /**
-         * 资源加载失败
-         */
-        void onLoadErr(VIPVideo video, VideoStateInfo status);
-    }
-
-    /**
-     * {@link com.vip.sdk.videolib.VIPVideo.StateCallback}的缺省子类，所有方法都是空实现
-     */
-    public static class SimpleStateCallback implements StateCallback {
-        @Override public void onStateChanged(VIPVideo video, int state) { }
-        @Override public void onLoadErr(VIPVideo video, VideoStateInfo status) { }
-    }
+    private static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
 
     private MediaPlayer.OnCompletionListener mOnCompletionListener;
     private MediaPlayer.OnPreparedListener mOnPreparedListener;
@@ -363,7 +312,7 @@ public class VIPVideo extends RelativeLayout implements VideoViewDelegate {
 //    }
 
     @Override
-    public void stopPlayback() {
+    public void stop() {
         if (null != mTinyController) {
             mTinyController.dispatchFromVideoStop(myInfo());
         }
@@ -394,17 +343,14 @@ public class VIPVideo extends RelativeLayout implements VideoViewDelegate {
         return 0;
     }
 
-    @Override
     public void setOnPreparedListener(MediaPlayer.OnPreparedListener l) {
         mOnPreparedListener = l;
     }
 
-    @Override
     public void setOnErrorListener(MediaPlayer.OnErrorListener l) {
         mOnErrorListener = l;
     }
 
-    @Override
     public void setOnCompletionListener(MediaPlayer.OnCompletionListener l) {
         mOnCompletionListener = l;
     }
@@ -452,7 +398,7 @@ public class VIPVideo extends RelativeLayout implements VideoViewDelegate {
         checkAndSend(MSG_LOADING, null);
     }
 
-    protected void dispatchLoadErr(VideoStateInfo info) {
+    protected void dispatchLoadErr(VideoState info) {
         checkAndSend(MSG_LOADEER, info);
     }
 
@@ -496,7 +442,7 @@ public class VIPVideo extends RelativeLayout implements VideoViewDelegate {
                     break;
                 case MSG_LOADEER:
                     if (null != mStateCallback) {
-                        mStateCallback.onLoadErr(VIPVideo.this, (VideoStateInfo) msg.obj);
+                        mStateCallback.onLoadErr(VIPVideo.this, (VideoState) msg.obj);
                     }
                     break;
                 case MSG_SETURI:
@@ -558,32 +504,4 @@ public class VIPVideo extends RelativeLayout implements VideoViewDelegate {
             if (DEBUG) Log.d("yytest", "surfaceDestroyed");
         }
     };
-}
-
-interface VideoViewDelegate {
-
-    void setVideoPath(String url);
-
-    void setVideoURI(Uri uri);
-
-    public void setVideoURICompat(Uri uri, Map<String, String> headers) ;
-
-    boolean isPlaying();
-
-    void start();
-
-    void pause();
-
-//    void suspend();
-
-    void stopPlayback();
-    public int getDuration() ;
-    public int getCurrentPosition();
-
-    public void setOnPreparedListener(MediaPlayer.OnPreparedListener l) ;
-
-    public void setOnErrorListener(MediaPlayer.OnErrorListener l) ;
-
-    public void setOnCompletionListener(MediaPlayer.OnCompletionListener l) ;
-
 }

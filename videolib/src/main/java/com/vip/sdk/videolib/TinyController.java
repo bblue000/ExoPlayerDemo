@@ -3,7 +3,8 @@ package com.vip.sdk.videolib;
 import android.net.Uri;
 import android.util.Log;
 
-import com.vip.sdk.uilib.video.VideoStateInfo;
+import com.vip.sdk.uilib.media.video.VIPVideoDebug;
+import com.vip.sdk.uilib.media.video.VideoState;
 import com.vip.sdk.videolib.autoplay.AutoLoadStrategy;
 import com.vip.sdk.videolib.autoplay.NetDependStrategy;
 import com.vip.sdk.videolib.download.SimpleTinyCache;
@@ -24,7 +25,7 @@ import java.util.Map;
  */
 public abstract class TinyController {
 
-    protected static final boolean DEBUG = TinyDebug.CONTROLLER;
+    protected static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
 
     private AutoLoadStrategy mAutoLoadStrategy;
     private TinyCache mTinyCache;
@@ -158,7 +159,7 @@ public abstract class TinyController {
         }
     }
 
-    protected void dispatchToVideoLoadErr(TinyVideoInfo info, String uri, VideoStateInfo status) {
+    protected void dispatchToVideoLoadErr(TinyVideoInfo info, String uri, VideoState status) {
         if (null != info) {
             info.video.dispatchLoadErr(status);
         }
@@ -177,7 +178,7 @@ public abstract class TinyController {
     /**
      * 视频缓存出错时调用
      */
-    protected abstract void onVideoLoadFailed(TinyVideoInfo info, String uri, VideoStateInfo status) ;
+    protected abstract void onVideoLoadFailed(TinyVideoInfo info, String uri, VideoState status) ;
 
     protected void dispatchOnDownloadProgress(TinyVideoInfo info, String uri, long current, long total) {
         //TODO 分配下载进度
@@ -191,7 +192,7 @@ public abstract class TinyController {
         }
     }
 
-    protected void dispatchOnDownloadFailed(TinyVideoInfo info, String uri, VideoStateInfo status) {
+    protected void dispatchOnDownloadFailed(TinyVideoInfo info, String uri, VideoState status) {
         if (DEBUG) Log.d("yytest", uri.substring(uri.lastIndexOf("/") + 1) + "下载失败了");
         onVideoLoadFailed(info, uri, status);
     }
@@ -209,7 +210,7 @@ public abstract class TinyController {
         }
 
         @Override
-        public void onFailed(TinyVideoInfo info, String uri, VideoStateInfo status) {
+        public void onFailed(TinyVideoInfo info, String uri, VideoState status) {
             dispatchOnDownloadFailed(info, uri, status);
         }
 

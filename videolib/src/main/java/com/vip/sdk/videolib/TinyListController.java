@@ -12,7 +12,8 @@ import android.widget.AbsListView;
 import android.widget.ListView;
 
 import com.vip.sdk.base.utils.ObjectUtils;
-import com.vip.sdk.uilib.video.VideoStateInfo;
+import com.vip.sdk.uilib.media.video.VIPVideoDebug;
+import com.vip.sdk.uilib.media.video.VideoState;
 
 import java.util.Map;
 
@@ -27,7 +28,7 @@ import java.util.Map;
  */
 public class TinyListController extends TinyController implements AbsListView.OnScrollListener {
 
-    static final boolean DEBUG = TinyDebug.LIST_CONTROLLER;
+    static final boolean DEBUG = VIPVideoDebug.LIST_CONTROLLER;
 
     /**
      * 封装针对ListView视图类型等方面的支持API，以便跟踪处理
@@ -353,7 +354,7 @@ public class TinyListController extends TinyController implements AbsListView.On
     }
 
     @Override
-    protected void onVideoLoadFailed(TinyVideoInfo info, String uri, VideoStateInfo status) {
+    protected void onVideoLoadFailed(TinyVideoInfo info, String uri, VideoState status) {
         if (mPlaying.match(info, uri) && null == mPlaying.info.playUri) {
             // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
             dispatchToVideoLoadErr(mPlaying.info, uri, status);

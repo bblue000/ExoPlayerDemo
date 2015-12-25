@@ -1,4 +1,4 @@
-package com.vip.sdk.videolib;
+package com.vip.sdk.uilib.media.video;
 
 /**
  * <p/>
@@ -7,14 +7,19 @@ package com.vip.sdk.videolib;
  *
  * @since 1.0
  */
-public class TinyDebug {
+public class VIPVideoDebug {
 
-    private TinyDebug() { }
+    private VIPVideoDebug() { }
 
     /**
      * debug controller
      */
     public static boolean CONTROLLER = true;
+
+    /**
+     * debug view
+     */
+    public static boolean VIEW = true;
 
     /**
      * debug controller

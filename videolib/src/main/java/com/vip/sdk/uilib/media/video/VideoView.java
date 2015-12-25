@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.video;
+package com.vip.sdk.uilib.media.video;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -39,6 +39,5 @@ import android.util.AttributeSet;
             setSecure(true);
         }
     }
-
 
 }

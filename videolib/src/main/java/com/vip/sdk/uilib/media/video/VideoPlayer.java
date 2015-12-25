@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.video;
+package com.vip.sdk.uilib.media.video;
 
 import android.net.Uri;
 
@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  *
- * 对外的视频组件接口
+ * 视频组件需要支持的功能的接口
  *
  * <p/>
  * <p/>
@@ -14,7 +14,7 @@ import java.util.Map;
  *
  * @since 1.0
  */
-public interface IVideoView {
+public interface VideoPlayer {
 
     /**
      * 设置url
@@ -68,6 +68,11 @@ public interface IVideoView {
      * 或者暂停时，调用该方法继续播放）
      */
     void start();
+
+    /**
+     * 跳到指定时间点
+     */
+    void seekTo(int msec);
 
     /**
      * 暂停
@@ -129,9 +134,14 @@ public interface IVideoView {
         int STATE_PAUSE = STATE_START + 1;
 
         /**
+         * 播放完成，紧接着会进入{@link #STATE_STOP}状态
+         */
+        int STATE_COMPLETION = STATE_PAUSE + 1;
+
+        /**
          * 进入停止状态（已播放完成）
          */
-        int STATE_STOP = STATE_PAUSE + 1;
+        int STATE_STOP = STATE_COMPLETION + 1;
 
         /**
          * {@link android.media.MediaPlayer}内部异步操作时发生错误，包含错误信息
@@ -143,7 +153,7 @@ public interface IVideoView {
          *
          * @param status 有的状态包含状态信息，将在触发相应状态时给出，参见不同状态说明
          */
-        void onStateChanged(IVideoView video, int state, VideoStateInfo status);
+        void onStateChanged(VIPVideo video, int state, VideoState status);
     }
 
 }

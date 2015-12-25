@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.vip.sdk.base.utils.ToastUtils;
-import com.vip.sdk.uilib.video.VideoStateInfo;
+import com.vip.sdk.uilib.media.video.VideoState;
 import com.vip.sdk.videolib.TinyListController;
 import com.vip.sdk.videolib.VIPVideo;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
@@ -210,7 +210,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
             }
 
             @Override
-            public void onLoadErr(VIPVideo video, VideoStateInfo status) {
+            public void onLoadErr(VIPVideo video, VideoState status) {
                 ToastUtils.showToast(status.message);
             }
         });
