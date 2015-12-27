@@ -10,8 +10,8 @@ import com.androidquery.callback.AjaxStatus;
 import com.androidquery.util.AQUtility;
 import com.vip.sdk.base.file.FileManagerUtils;
 import com.vip.sdk.base.utils.ObjectUtils;
-import com.vip.sdk.uilib.media.video.VideoState;
 import com.vip.sdk.uilib.media.video.VIPVideoDebug;
+import com.vip.sdk.uilib.media.video.VideoStateCallback;
 import com.vip.sdk.videolib.TinyVideoInfo;
 
 import org.apache.http.Header;
@@ -77,17 +77,17 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         });
     }
 
-    private static HashMap<String, WeakHashMap<TinyVideoInfo, TinyCache.TinyCacheCallback>> queueMap
-            = new HashMap<String, WeakHashMap<TinyVideoInfo, TinyCache.TinyCacheCallback>>(4);
+    private static HashMap<String, WeakHashMap<TinyVideoInfo, VideoCache.TinyCacheCallback>> queueMap
+            = new HashMap<String, WeakHashMap<TinyVideoInfo, VideoCache.TinyCacheCallback>>(4);
 
     private static WeakHashMap<TinyVideoInfo, String> videoMap = new WeakHashMap<TinyVideoInfo, String>(4);
 
     /**
      * 下载
      */
-    public static void download(TinyVideoInfo tinyVideoInfo, TinyCache.TinyCacheCallback callback) {
+    public static void download(TinyVideoInfo tinyVideoInfo, VideoCache.TinyCacheCallback callback) {
         if (null == tinyVideoInfo || null == tinyVideoInfo.uri) { // 容错处理
-            callback.onFailed(tinyVideoInfo, "", new VideoState(-1, "null"));
+            callback.onFailed(tinyVideoInfo, "", new VideoStateCallback.VideoState(-1, "null"));
             return;
         }
 
@@ -147,12 +147,12 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
      * 尽量在主线程调用该方法
      */
     protected static void addQueue(String url, TinyVideoInfo tinyVideoInfo,
-                                   TinyCache.TinyCacheCallback callback) {
-        WeakHashMap<TinyVideoInfo, TinyCache.TinyCacheCallback> vs = queueMap.get(url);
+                                   VideoCache.TinyCacheCallback callback) {
+        WeakHashMap<TinyVideoInfo, VideoCache.TinyCacheCallback> vs = queueMap.get(url);
         if (vs == null) {
             if (queueMap.containsKey(url)) { // 如果有其他的相同请求过来，加入map中
                 if (DEBUG) Log.e("yytest" , "count + 1, url = " + url);
-                vs = new WeakHashMap<TinyVideoInfo, TinyCache.TinyCacheCallback>();
+                vs = new WeakHashMap<TinyVideoInfo, VideoCache.TinyCacheCallback>();
                 vs.put(tinyVideoInfo, callback);
                 queueMap.put(url, vs);
             } else {
@@ -208,7 +208,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
     protected int mBufferSize = 4 * 1024;
     protected long mSlotSize = 10 * 1024;
     protected WeakReference<TinyVideoInfo> mTinyVideoInfo;
-    protected TinyCache.TinyCacheCallback mCallback;
+    protected VideoCache.TinyCacheCallback mCallback;
 
     private File mTempFile;
     private File mTargetFile;
@@ -231,7 +231,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         return this;
     }
 
-    public VideoAjaxCallback downloadCallback(TinyCache.TinyCacheCallback callback) {
+    public VideoAjaxCallback downloadCallback(VideoCache.TinyCacheCallback callback) {
         mCallback = callback;
         return this;
     }
@@ -389,9 +389,9 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
     // 公共方法封装
     protected static void callback(String url, TinyVideoInfo myInfo,
                                    File target, AjaxStatus status,
-                                   TinyCache.TinyCacheCallback myCallback) {
+                                   VideoCache.TinyCacheCallback myCallback) {
         synchronized (queueMap) {
-            WeakHashMap<TinyVideoInfo, TinyCache.TinyCacheCallback> ivs = queueMap.remove(url);
+            WeakHashMap<TinyVideoInfo, VideoCache.TinyCacheCallback> ivs = queueMap.remove(url);
             videoMap.remove(myInfo);
 
             //check if view queue already contains first view
@@ -402,7 +402,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
             if (null != ivs) {
                 Set<TinyVideoInfo> set = ivs.keySet();
                 for (TinyVideoInfo info : set) {
-                    TinyCache.TinyCacheCallback cb = ivs.get(info);
+                    VideoCache.TinyCacheCallback cb = ivs.get(info);
                     checkCb(url, info, target, status, cb);
                 }
             }
@@ -411,7 +411,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
 
     protected static void checkCb(String url, TinyVideoInfo info,
                                   File target, AjaxStatus status,
-                                  TinyCache.TinyCacheCallback cb) {
+                                  VideoCache.TinyCacheCallback cb) {
         if (null == info || null == cb) return;
 
         if (DEBUG) Log.d("yytest" , "checkCb matchUri = " + info.matchUri(url));
@@ -419,7 +419,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
             if (null != target) {
                 cb.onSuccess(info, url, Uri.fromFile(target));
             } else {
-                cb.onFailed(info, url, new VideoState(status.getCode(), status.getMessage()));
+                cb.onFailed(info, url, new VideoStateCallback.VideoState(status.getCode(), status.getMessage()));
             }
         }
     }

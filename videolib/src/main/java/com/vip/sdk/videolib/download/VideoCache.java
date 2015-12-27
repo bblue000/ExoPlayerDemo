@@ -3,7 +3,7 @@ package com.vip.sdk.videolib.download;
 import android.content.Context;
 import android.net.Uri;
 
-import com.vip.sdk.uilib.media.video.VideoState;
+import com.vip.sdk.uilib.media.video.VideoStateCallback;
 import com.vip.sdk.videolib.TinyVideoInfo;
 
 import java.io.File;
@@ -18,7 +18,7 @@ import java.io.File;
  *
  * @since 1.0
  */
-public interface TinyCache {
+public interface VideoCache {
 
     /**
      * 根据视频信息下载视频
@@ -67,7 +67,7 @@ public interface TinyCache {
          * @param info 视频信息
          * @param status 失败信息
          */
-        void onFailed(TinyVideoInfo info, String uri, VideoState status) ;
+        void onFailed(TinyVideoInfo info, String uri, VideoStateCallback.VideoState status) ;
 
     }
 
@@ -78,6 +78,6 @@ public interface TinyCache {
     class SimpleTinyCacheCallback implements TinyCacheCallback {
         @Override public void onProgress(TinyVideoInfo info, String uri, long current, long total) { }
         @Override public void onSuccess(TinyVideoInfo info, String uri, Uri target) { }
-        @Override public void onFailed(TinyVideoInfo info, String uri, VideoState status) { }
+        @Override public void onFailed(TinyVideoInfo info, String uri, VideoStateCallback.VideoState status) { }
     }
 }

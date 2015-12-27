@@ -16,7 +16,7 @@ import java.io.File;
  *
  * @since 1.0
  */
-public class SimpleTinyCache implements TinyCache {
+public class SimpleVideoCache implements VideoCache {
 
     @Override
     public void load(final TinyVideoInfo tinyVideoInfo, final TinyCacheCallback callback) {

@@ -1,20 +1,18 @@
 package com.vip.sdk.uilib.media.video;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
+import android.widget.VideoView;
 
-import com.vip.sdk.base.utils.AndroidUtils;
 import com.vip.sdk.videolib.R;
 
 import java.util.Map;
@@ -25,7 +23,7 @@ import java.util.Map;
  * <br/>
  *
  * 用一层ViewGroup包装并提供给外部使用，有较好的兼容性；
- * 使用具体的控件（如{@link android.widget.VideoView}或者{@link android.view.SurfaceView}），不利于以后的替换、修改
+ * 使用具体的控件（如{@link android.widget.VideoView}或者{@link android.view.SurfaceView}），不利于以后的替换、修改。
  *
  * <p/>
  * <p/>
@@ -37,7 +35,6 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
 
     private static final String TAG = VIPVideo.class.getSimpleName();
     private static final boolean DEBUG = VIPVideoDebug.VIEW;
-
 
     // all possible internal states
     private static final int STATE_ERROR              = -1;
@@ -66,12 +63,8 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
     private int mSeekWhenPrepared;  // recording the seek position while preparing
 
     private float mSizeRatio = -1.0f;
-    private StateCallback mStateCallback;
 
     // 防止代码创建对象，并设置Uri的情况
-    private Uri mUri;
-    private Map<String, String> mHeaders;
-
     public VIPVideo(Context context) {
         this(context, null);
     }
@@ -85,44 +78,32 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
         initTinyVideoContainer(context, attrs, defStyleAttr);
     }
 
+    // 处理一些初始化的属性
     private void initTinyVideoContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.VIPVideo, defStyleAttr, 0);
         mSizeRatio = a.getFloat(R.styleable.VIPVideo_sizeRatio, -1.0f);
         a.recycle();
     }
 
-    @Override
-    public String toString() {
-        return TAG + "@" + Integer.toHexString(hashCode());
-    }
-
-    /**
-     * 设置宽高比
-     * @param ratio 宽高比例（宽:高）
-     */
-    public void setSizeRatio(float ratio) {
-        if (ratio <= 0 || mSizeRatio == ratio) {
-            return;
+    // 负责创建VideoView
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+    private void checkInitVideoView() {
+        if (null == mVideoView) {
+            mVideoView = new VideoView(getContext());
+            // 这个可以让UI hierarchy截不了屏幕
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                mVideoView.setSecure(true);
+            }
+            mVideoView.getHolder().addCallback(mSurfaceCallback);
+            mVideoView.setBackgroundColor(0); // this is important
         }
-        mSizeRatio = ratio;
-        // 重新测量
-        requestLayout();
     }
 
-//    private MediaPlayer.OnCompletionListener mOnCompletionListener;
-//    private MediaPlayer.OnPreparedListener mOnPreparedListener;
-//    private MediaPlayer.OnErrorListener mOnErrorListener;
-//    public void setOnPreparedListener(MediaPlayer.OnPreparedListener l) {
-//        mOnPreparedListener = l;
-//    }
-//
-//    public void setOnErrorListener(MediaPlayer.OnErrorListener l) {
-//        mOnErrorListener = l;
-//    }
-//
-//    public void setOnCompletionListener(MediaPlayer.OnCompletionListener l) {
-//        mOnCompletionListener = l;
-//    }
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        removeAllViews(); // 我们不允许有其他的子View存在
+    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -152,15 +133,119 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+    @Override
+    public String toString() {
+        return TAG + "@" + Integer.toHexString(hashCode());
+    }
+
+    /**
+     * 设置宽高比
+     * @param ratio 宽高比例（宽:高）
+     */
+    public void setSizeRatio(float ratio) {
+        if (ratio <= 0 || mSizeRatio == ratio) {
+            return;
+        }
+        mSizeRatio = ratio;
+        // 重新测量
+        requestLayout();
+    }
+
+    /**
+     * Interface definition for a callback to be invoked when the media
+     * source is ready for playback.
+     */
+    public interface OnPreparedListener {
+        /**
+         * Called when the media file is ready for playback.
+         *
+         * @param video the VIPVideo that is ready for playback
+         * @param mp the MediaPlayer that is ready for playback
+         */
+        void onPrepared(VIPVideo video, MediaPlayer mp);
+    }
+    private OnPreparedListener mOnPreparedListener;
+    /**
+     * Register a callback to be invoked when the media file
+     * is loaded and ready to go.
+     *
+     * @param l The callback that will be run
+     */
+    public void setOnPreparedListener(OnPreparedListener l) {
+        mOnPreparedListener = l;
+    }
+
+    /**
+     * Interface definition for a callback to be invoked when playback of
+     * a media source has completed.
+     */
+    public interface OnCompletionListener {
+        /**
+         * Called when the end of a media source is reached during playback.
+         *
+         * @param video the VIPVideo that is ready for playback
+         * @param mp the MediaPlayer that reached the end of the file
+         */
+        void onCompletion(VIPVideo video, MediaPlayer mp);
+    }
+    private OnCompletionListener mOnCompletionListener;
+    /**
+     * Register a callback to be invoked when the end of a media file
+     * has been reached during playback.
+     *
+     * @param l The callback that will be run
+     */
+    public void setOnCompletionListener(OnCompletionListener l) {
+        mOnCompletionListener = l;
+    }
+
+    /**
+     * Interface definition of a callback to be invoked when there
+     * has been an error during an asynchronous operation (other errors
+     * will throw exceptions at method call time).
+     */
+    public interface OnErrorListener {
+        /**
+         * Called to indicate an error.
+         *
+         * @param mp      the MediaPlayer the error pertains to
+         * @param what    the type of error that has occurred:
+         * <ul>
+         * <li>{@link android.media.MediaPlayer#MEDIA_ERROR_UNKNOWN}
+         * <li>{@link android.media.MediaPlayer#MEDIA_ERROR_SERVER_DIED}
+         * </ul>
+         * @param extra an extra code, specific to the error. Typically
+         * implementation dependent.
+         * <ul>
+         * <li>{@link android.media.MediaPlayer#MEDIA_ERROR_IO}
+         * <li>{@link android.media.MediaPlayer#MEDIA_ERROR_MALFORMED}
+         * <li>{@link android.media.MediaPlayer#MEDIA_ERROR_UNSUPPORTED}
+         * <li>{@link android.media.MediaPlayer#MEDIA_ERROR_TIMED_OUT}
+         * </ul>
+         * @return True if the method handled the error, false if it didn't.
+         * Returning false, or not having an OnErrorListener at all, will
+         * cause the OnCompletionListener to be called.
+         */
+        boolean onError(VIPVideo video, MediaPlayer mp, int what, int extra);
+    }
+    private OnErrorListener mOnErrorListener;
+    /**
+     * Register a callback to be invoked when an error occurs
+     * during playback or setup.  If no listener is specified,
+     * or if the listener returned false, VideoView will inform
+     * the user of any errors.
+     *
+     * @param l The callback that will be run
+     */
+    public void setOnErrorListener(OnErrorListener l) {
+        mOnErrorListener = l;
+    }
+
     // 当设置资源的时候再添加该组件
-    protected void addTinyVideo() {
+    private void addTinyVideo() {
         removeVideoView();
 
-        if (null == mVideoView) {
-            mVideoView = new VideoView(getContext());
-            mVideoView.getHolder().addCallback(mSurfaceCallback);
-            mVideoView.setBackgroundColor(0); // this is important
-        }
+        checkInitVideoView();
         ViewGroup.LayoutParams parentLp = getLayoutParams();
         if (null != parentLp) { // 如果父容器的宽高不是绝对值，从父容器中赋值宽高
             if (parentLp.width < 0) {
@@ -177,7 +262,7 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
         addView(mVideoView, mVideoViewLP);
     }
 
-    protected void removeVideoView() {
+    private void removeVideoView() {
         final int childCount = getChildCount();
         if (null != mVideoView) {
             mVideoView.setOnPreparedListener(null);
@@ -187,13 +272,6 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
         if (childCount > 0) {
             removeAllViews();
         }
-    }
-
-    /**
-     * VideoView是否已添加
-     */
-    protected boolean isVideoAdded() {
-        return getChildCount() > 0 && null != mVideoView;
     }
 
     @Override
@@ -208,21 +286,31 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
 
     @Override
     public void setVideoURICompat(Uri uri, Map<String, String> headers) {
-        mUri = uri;
-        mHeaders = headers;
         // send message
+        mSeekWhenPrepared = 0;
         if (!isVideoAdded()) {
             addTinyVideo();
         }
         mCurrentState = STATE_PREPARING;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mVideoView.setVideoURI(uri, null);
+            mVideoView.setVideoURI(uri, headers);
         } else {
+            if (DEBUG) Log.d(TAG, "headers are ignoreds");
             mVideoView.setVideoURI(uri);
         }
     }
 
-    private boolean isInPlaybackState() {
+    /**
+     * VideoView是否已添加
+     */
+    protected boolean isVideoAdded() {
+        return getChildCount() > 0 && null != mVideoView;
+    }
+
+    /**
+     * 判断是否在可以播放的状态
+     */
+    /*package*/ boolean isInPlaybackState() {
         return (isVideoAdded() &&
                 mCurrentState != STATE_ERROR &&
                 mCurrentState != STATE_IDLE &&
@@ -267,34 +355,78 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
     @Override
     public void stop() {
         if (isVideoAdded()) {
+            mVideoView.stopPlayback();
             removeVideoView();
+            mCurrentState = STATE_IDLE;
+            mTargetState = STATE_IDLE;
         }
     }
 
     @Override
     public int getDuration() {
-        return isVideoAdded() ? Math.max(0, mVideoView.getDuration()) : 0;
+        return isInPlaybackState() ? Math.max(0, mVideoView.getDuration()) : 0;
     }
 
     @Override
     public int getCurrentPosition() {
-        return isVideoAdded() ? Math.max(0, mVideoView.getCurrentPosition()) : 0;
+        return isInPlaybackState() ? Math.max(0, mVideoView.getCurrentPosition()) : 0;
     }
 
-    protected void dispatchLoading() {
-        postDo(StateCallback.STATE_LOADING, null);
+    @Override
+    public int getBufferPercentage() {
+        return isInPlaybackState() ? Math.max(0, mVideoView.getBufferPercentage()) : 0;
+    }
+
+    // ==================================================
+    // ==================================================
+    // ==================================================
+    // for inner APIs
+    private OnPreparedListener mInnerAPIOnPreparedListener;
+    private OnCompletionListener mInnerAPIOnCompletionListener;
+    private OnErrorListener mInnerAPIOnErrorListener;
+    protected void setInnerAPIOnPreparedListener(OnPreparedListener l) {
+        mInnerAPIOnPreparedListener = l;
+    }
+    protected void setInnerAPIOnCompletionListener(OnCompletionListener l) {
+        mInnerAPIOnCompletionListener = l;
+    }
+    protected void setInnerAPIOnErrorListener(OnErrorListener l) {
+        mInnerAPIOnErrorListener = l;
+    }
+
+    private VIPVideoToken mToken;
+    protected void setToken(VIPVideoToken token) {
+        mToken = token;
+    }
+    protected VIPVideoToken getToken() {
+        return mToken;
     }
 
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
-            if (DEBUG) Log.d("yytest", mUri + " prepared");
-            if (null != mTinyController) {
-                mTinyController.dispatchFromVideoPrepared(myInfo());
+            if (DEBUG) Log.d("yytest", this + " prepared");
+
+            mCurrentState = STATE_PREPARED;
+
+            if (null != mInnerAPIOnPreparedListener) {
+                mInnerAPIOnPreparedListener.onPrepared(VIPVideo.this, mp);
             }
-            checkAndSend(STATEPREPARED, null);
             if (null != mOnPreparedListener) {
-                mOnPreparedListener.onPrepared(mp);
+                mOnPreparedListener.onPrepared(VIPVideo.this, mp);
+            }
+
+            int seekToPosition = mSeekWhenPrepared;  // mSeekWhenPrepared may be changed after seekTo() call
+            if (seekToPosition != 0) {
+                seekTo(seekToPosition);
+            }
+            // We don't know the video size yet, but should start anyway.
+            // The video size might be reported to us later.
+            if (mTargetState == STATE_PLAYING) {
+                start();
+            } else if (!isPlaying() &&
+                    (seekToPosition != 0 || getCurrentPosition() > 0)) {
+                // do sth.
             }
         }
     };
@@ -302,11 +434,14 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
     private MediaPlayer.OnCompletionListener mCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            postDo(StateCallback.STATE_COMPLETION, null);
-            if (null != mOnCompletionListener) {
-                mOnCompletionListener.onCompletion(mp);
+            mCurrentState = STATE_PLAYBACK_COMPLETED;
+            mTargetState = STATE_PLAYBACK_COMPLETED;
+            if (null != mInnerAPIOnCompletionListener) {
+                mInnerAPIOnCompletionListener.onCompletion(VIPVideo.this, mp);
             }
-            postDo(StateCallback.STATE_STOP, null);
+            if (null != mOnCompletionListener) {
+                mOnCompletionListener.onCompletion(VIPVideo.this, mp);
+            }
         }
     };
 
@@ -314,67 +449,42 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
             /* If an error handler has been supplied, use it and finish. */
-//            if (null != mOnErrorListener) {
-//                if (mOnErrorListener.onError(mp, what, extra)) {
-//                    return true;
-//                }
-//            }
-            return false;
+            if (DEBUG) Log.d(TAG, "Error: " + what + "," + extra);
+            mCurrentState = STATE_ERROR;
+            mTargetState = STATE_ERROR;
+            boolean ret = false;
+            if (null != mInnerAPIOnErrorListener) {
+                ret = mInnerAPIOnErrorListener.onError(VIPVideo.this, mp, what, extra);
+            }
+            if (null != mOnErrorListener) {
+                ret = mOnErrorListener.onError(VIPVideo.this, mp, what, extra) || ret;
+            }
+            return ret;
         }
     };
 
     private SurfaceHolder.Callback mSurfaceCallback = new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            if (DEBUG) Log.d("yytest", "surfaceCreated");
+            if (DEBUG) Log.d(TAG, "surfaceCreated");
         }
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            if (DEBUG) Log.d("yytest", "surfaceChanged");
+            if (DEBUG) Log.d(TAG, "surfaceChanged");
+            boolean isValidState =  (mTargetState == STATE_PLAYING);
+            if (isVideoAdded() && isValidState) {
+                if (mSeekWhenPrepared != 0) {
+                    seekTo(mSeekWhenPrepared);
+                }
+                start();
+            }
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
-            if (DEBUG) Log.d("yytest", "surfaceDestroyed");
+            if (DEBUG) Log.d(TAG, "surfaceDestroyed");
         }
     };
 
-    protected void postDo(int what, Object param) {
-        Message msg = Message.obtain(mHandler, what, param);
-        if (AndroidUtils.isMainThread()) {
-            mHandler.handleMessage(msg);
-            msg.recycle();
-        } else {
-            msg.sendToTarget();
-        }
-    }
-
-    private Handler mHandler = new Handler(Looper.getMainLooper()) {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case StateCallback.STATE_LOADING:
-                    break;
-                case StateCallback.STATE_LOAD_ERR:
-                    break;
-                case StateCallback.STATE_PREPARED:
-                    break;
-                case StateCallback.STATE_START:
-                    break;
-                case StateCallback.STATE_PAUSE:
-                    break;
-                case StateCallback.STATE_COMPLETION:
-                    break;
-                case StateCallback.STATE_STOP:
-                    break;
-                case StateCallback.STATE_ERR:
-                    if (DEBUG) Log.e(TAG, "err");
-                    mCurrentState = STATE_ERROR;
-                    mTargetState = STATE_ERROR;
-                    break;
-            }
-            mStateCallback.onStateChanged(VIPVideo.this, msg.what, (VideoState) msg.obj);
-        }
-    };
 }

@@ -5,10 +5,10 @@ import android.util.Log;
 
 import com.vip.sdk.uilib.media.video.VIPVideoDebug;
 import com.vip.sdk.uilib.media.video.VideoState;
-import com.vip.sdk.videolib.autoplay.AutoLoadStrategy;
-import com.vip.sdk.videolib.autoplay.NetDependStrategy;
-import com.vip.sdk.videolib.download.SimpleTinyCache;
-import com.vip.sdk.videolib.download.TinyCache;
+import com.vip.sdk.uilib.media.video.autoplay.AutoLoadStrategy;
+import com.vip.sdk.uilib.media.video.autoplay.NetDependStrategy;
+import com.vip.sdk.videolib.download.SimpleVideoCache;
+import com.vip.sdk.videolib.download.VideoCache;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,7 +28,7 @@ public abstract class TinyController {
     protected static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
 
     private AutoLoadStrategy mAutoLoadStrategy;
-    private TinyCache mTinyCache;
+    private VideoCache mVideoCache;
     private LinkedHashMap<VIPVideo, TinyVideoInfo> mVideoInfoMap = new LinkedHashMap<VIPVideo, TinyVideoInfo>();
 
     protected TinyController() {
@@ -46,10 +46,10 @@ public abstract class TinyController {
     }
 
     /**
-     * 设置下载器，默认为{@link SimpleTinyCache}。
+     * 设置下载器，默认为{@link com.vip.sdk.videolib.download.SimpleVideoCache}。
      */
-    public TinyController cache(TinyCache cache) {
-        mTinyCache = cache;
+    public TinyController cache(VideoCache cache) {
+        mVideoCache = cache;
         return this;
     }
     // end
@@ -197,7 +197,7 @@ public abstract class TinyController {
         onVideoLoadFailed(info, uri, status);
     }
 
-    protected TinyCache.TinyCacheCallback mTinyCacheCallback = new TinyCache.TinyCacheCallback() {
+    protected VideoCache.TinyCacheCallback mTinyCacheCallback = new VideoCache.TinyCacheCallback() {
 
         @Override
         public void onProgress(TinyVideoInfo info, String uri, long current, long total) {
@@ -232,19 +232,19 @@ public abstract class TinyController {
         return new NetDependStrategy();
     }
 
-    public TinyCache getCache() {
-        if (null == mTinyCache) {
+    public VideoCache getCache() {
+        if (null == mVideoCache) {
             synchronized (this) {
-                if (null == mTinyCache) { // 使用默认的
-                    mTinyCache = createDefaultDownloader();
+                if (null == mVideoCache) { // 使用默认的
+                    mVideoCache = createDefaultDownloader();
                 }
             }
         }
-        return mTinyCache;
+        return mVideoCache;
     }
 
-    protected TinyCache createDefaultDownloader() {
-        return new SimpleTinyCache();
+    protected VideoCache createDefaultDownloader() {
+        return new SimpleVideoCache();
     }
 
 }

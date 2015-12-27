@@ -16,9 +16,8 @@ import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-import com.vip.sdk.uilib.media.video.IVideoView;
 import com.vip.sdk.uilib.media.video.VIPVideoDebug;
-import com.vip.sdk.uilib.media.video.VideoState;
+import com.vip.sdk.uilib.media.video.VideoStateCallback;
 
 import java.util.Map;
 
@@ -398,8 +397,8 @@ public class VIPVideo extends RelativeLayout implements IVideoView {
         checkAndSend(MSG_LOADING, null);
     }
 
-    protected void dispatchLoadErr(VideoState info) {
-        checkAndSend(MSG_LOADEER, info);
+    protected void dispatchLoadErr(VideoStateCallback.VideoState info) {
+//        checkAndSend(MSG_LOADEER, info);
     }
 
     private static final int MSG_LOADING = 0;
@@ -413,41 +412,41 @@ public class VIPVideo extends RelativeLayout implements IVideoView {
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_LOADING:
-                    if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_LOADING);
-                    }
-                    break;
-                case MSG_PREPARED:
-                    if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_PREPARED);
-                    }
-                    break;
-                case MSG_START:
-                    if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_START);
-                    }
-                    break;
-                case MSG_PAUSE:
-                    if (null != mStateCallback) {
-                            mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_PAUSE);
-                    }
-                    break;
-                case MSG_SUSPEND:
-                case MSG_STOP:
-                    if (null != mStateCallback) {
-                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_STOP);
-                    }
-                    break;
-                case MSG_LOADEER:
-                    if (null != mStateCallback) {
-                        mStateCallback.onLoadErr(VIPVideo.this, (VideoState) msg.obj);
-                    }
-                    break;
-                case MSG_SETURI:
-                    break;
-            }
+//            switch (msg.what) {
+//                case MSG_LOADING:
+//                    if (null != mStateCallback) {
+//                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_LOADING);
+//                    }
+//                    break;
+//                case MSG_PREPARED:
+//                    if (null != mStateCallback) {
+//                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_PREPARED);
+//                    }
+//                    break;
+//                case MSG_START:
+//                    if (null != mStateCallback) {
+//                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_START);
+//                    }
+//                    break;
+//                case MSG_PAUSE:
+//                    if (null != mStateCallback) {
+//                            mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_PAUSE);
+//                    }
+//                    break;
+//                case MSG_SUSPEND:
+//                case MSG_STOP:
+//                    if (null != mStateCallback) {
+//                        mStateCallback.onStateChanged(VIPVideo.this, StateCallback.STATE_STOP);
+//                    }
+//                    break;
+//                case MSG_LOADEER:
+//                    if (null != mStateCallback) {
+//                        mStateCallback.onLoadErr(VIPVideo.this, (VideoState) msg.obj);
+//                    }
+//                    break;
+//                case MSG_SETURI:
+//                    break;
+//            }
         }
     };
 

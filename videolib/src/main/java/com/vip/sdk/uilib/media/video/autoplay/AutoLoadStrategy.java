@@ -1,4 +1,4 @@
-package com.vip.sdk.videolib.autoplay;
+package com.vip.sdk.uilib.media.video.autoplay;
 
 import com.vip.sdk.videolib.VIPVideo;
 
