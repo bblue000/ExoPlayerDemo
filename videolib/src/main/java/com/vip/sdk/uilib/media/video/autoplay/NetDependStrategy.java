@@ -4,7 +4,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import com.vip.sdk.videolib.VIPVideo;
+import com.vip.sdk.uilib.media.video.VIPVideo;
 
 /**
  *
@@ -20,7 +20,7 @@ import com.vip.sdk.videolib.VIPVideo;
  *
  * @since 1.0
  */
-public class NetDependStrategy implements AutoLoadStrategy {
+public class NetDependStrategy implements AutoLoadable {
 
     private ConnectivityManager mManager;
 

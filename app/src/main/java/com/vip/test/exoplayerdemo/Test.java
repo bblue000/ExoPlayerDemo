@@ -17,6 +17,8 @@ import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.vip.sdk.uilib.media.video.SingleVideoController;
+import com.vip.sdk.uilib.media.video.VIPVideo;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,7 +36,7 @@ import java.io.InputStream;
 public class Test extends Activity {
 
     private RelativeLayout rlt;
-    private VideoView vv;
+    private VIPVideo vv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +45,7 @@ public class Test extends Activity {
 
 
         rlt = (RelativeLayout) findViewById(R.id.rlt);
-        vv = (VideoView) findViewById(R.id.vv);
+        vv = (VIPVideo) findViewById(R.id.vv);
 
 //        final Handler handler = new Handler();
 //        handler.postDelayed(new Runnable() {
@@ -64,8 +66,11 @@ public class Test extends Activity {
 //            }
 //        }, 1000);
 
-        vv.setVideoPath("file:///android_asset/vip1.mp4");
-        vv.start();
+        SingleVideoController videoController = new SingleVideoController(vv);
+        videoController.setPath(vv, "http://192.168.1.111/public/vip1.mp4");
+        //vv.setVideoPath("http://192.168.1.111/public/vip1.mp4");
+        //vv.start();
+        videoController.start(vv);
 
 //        final File file = new File(Environment.getExternalStorageDirectory(), "yytest");
 //        vv.setVideoURI(Uri.fromFile(file));

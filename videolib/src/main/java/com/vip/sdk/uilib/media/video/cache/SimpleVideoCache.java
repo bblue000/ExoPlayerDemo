@@ -1,26 +1,22 @@
-package com.vip.sdk.videolib.download;
+package com.vip.sdk.uilib.media.video.cache;
 
 import android.content.Context;
 
-import com.vip.sdk.videolib.TinyVideoInfo;
+import com.vip.sdk.uilib.media.video.VIPVideoToken;
 
 import java.io.File;
 
 /**
  *
- * 默认的下载器
+ * 默认缓存
  *
- * <p/>
- * <p/>
- * Created by Yin Yong on 15/12/14.
- *
- * @since 1.0
+ * Created by Yin Yong on 15/12/27.
  */
 public class SimpleVideoCache implements VideoCache {
 
     @Override
-    public void load(final TinyVideoInfo tinyVideoInfo, final TinyCacheCallback callback) {
-        VideoAjaxCallback.download(tinyVideoInfo, callback);
+    public void load(VIPVideoToken video, CacheCallback callback) {
+        VideoAjaxCallback.download(video, callback);
     }
 
     @Override

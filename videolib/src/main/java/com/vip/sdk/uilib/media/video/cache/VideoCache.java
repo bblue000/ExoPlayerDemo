@@ -1,29 +1,22 @@
-package com.vip.sdk.videolib.download;
+package com.vip.sdk.uilib.media.video.cache;
 
 import android.content.Context;
 import android.net.Uri;
 
+import com.vip.sdk.uilib.media.video.VIPVideoToken;
 import com.vip.sdk.uilib.media.video.VideoStateCallback;
-import com.vip.sdk.videolib.TinyVideoInfo;
 
 import java.io.File;
 
 /**
- *
- * 视频下载器
- *
- * <p/>
- * <p/>
- * Created by Yin Yong on 15/12/14.
- *
- * @since 1.0
+ * Created by Yin Yong on 15/12/27.
  */
 public interface VideoCache {
 
     /**
      * 根据视频信息下载视频
      */
-    void load(TinyVideoInfo video, TinyCacheCallback callback);
+    void load(VIPVideoToken video, CacheCallback callback);
 
     /**
      * 获取缓存文件夹路径
@@ -45,7 +38,7 @@ public interface VideoCache {
      *
      * @since 1.0
      */
-    interface TinyCacheCallback {
+    interface CacheCallback {
 
         /**
          * 下载进度的回调
@@ -53,31 +46,30 @@ public interface VideoCache {
          * @param current 当前已下载的大小
          * @param total 总大小
          */
-        void onProgress(TinyVideoInfo info, String uri, long current, long total) ;
+        void onProgress(VIPVideoToken info, String uri, long current, long total) ;
 
         /**
          * 下载成功时的回调
          * @param info 视频信息
          * @param target 目标文件
          */
-        void onSuccess(TinyVideoInfo info, String uri, Uri target);
+        void onSuccess(VIPVideoToken info, String uri, Uri target);
 
         /**
          * 下载失败时的回调
          * @param info 视频信息
          * @param status 失败信息
          */
-        void onFailed(TinyVideoInfo info, String uri, VideoStateCallback.VideoState status) ;
+        void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoState status) ;
 
     }
 
     /**
-     * {@link TinyCacheCallback}的缺省实现，
-     * 所有方法都是默认空实现
+     * {@link com.vip.sdk.uilib.media.video.cache.VideoCache.CacheCallback}的缺省实现——所有方法都是默认空实现
      */
-    class SimpleTinyCacheCallback implements TinyCacheCallback {
-        @Override public void onProgress(TinyVideoInfo info, String uri, long current, long total) { }
-        @Override public void onSuccess(TinyVideoInfo info, String uri, Uri target) { }
-        @Override public void onFailed(TinyVideoInfo info, String uri, VideoStateCallback.VideoState status) { }
+    class SimpleCacheCallback implements CacheCallback {
+        @Override public void onProgress(VIPVideoToken info, String uri, long current, long total) { }
+        @Override public void onSuccess(VIPVideoToken info, String uri, Uri target) { }
+        @Override public void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoState status) { }
     }
 }

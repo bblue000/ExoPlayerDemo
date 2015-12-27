@@ -11,6 +11,8 @@ public class VIPVideoDebug {
 
     private VIPVideoDebug() { }
 
+    public static String TAG = "yytest";
+
     /**
      * debug controller
      */

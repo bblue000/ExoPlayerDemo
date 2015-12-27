@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.widget.ListView;
 
-import com.vip.sdk.videolib.TinyListController;
+import com.vip.sdk.uilib.media.video.ListVideoController;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 
@@ -13,13 +13,13 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 /**
- * something
- * <p/>
- * <p/>
- * Created by Yin Yong on 15/12/15.
- *
- * @since 1.0
- */
+* something
+* <p/>
+* <p/>
+* Created by Yin Yong on 15/12/15.
+*
+* @since 1.0
+*/
 public class VideoListActivity extends Activity {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -29,7 +29,7 @@ public class VideoListActivity extends Activity {
     @InjectView(R.id.list)
     ListView list;
 
-    private TinyListController mController;
+    private ListVideoController mController;
 
     private MediaListAdapter mAdapter;
 
@@ -45,12 +45,12 @@ public class VideoListActivity extends Activity {
     }
 
     public void initView() {
-        mController = new TinyListController(list);
+        mController = new ListVideoController(list);
 
         list.setOnScrollListener(mController);
 
         mAdapter = new MediaListAdapter(this);
-        mAdapter.setTinyListController(mController);
+        mAdapter.setListVideoController(mController);
 
         list.setAdapter(mAdapter);
     }

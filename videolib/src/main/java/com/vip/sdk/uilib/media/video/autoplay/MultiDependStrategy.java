@@ -1,6 +1,6 @@
 package com.vip.sdk.uilib.media.video.autoplay;
 
-import com.vip.sdk.videolib.VIPVideo;
+import com.vip.sdk.uilib.media.video.VIPVideo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,23 +15,23 @@ import java.util.List;
  *
  * @since 1.0
  */
-public class MultiDependStrategy implements AutoLoadStrategy {
+public class MultiDependStrategy implements AutoLoadable {
 
-    private List<AutoLoadStrategy> mOthers;
+    private List<AutoLoadable> mOthers;
     public MultiDependStrategy() {
 
     }
 
-    public MultiDependStrategy with(AutoLoadStrategy one) {
+    public MultiDependStrategy with(AutoLoadable one) {
         checkList();
         mOthers.add(one);
         return this;
     }
 
-    public MultiDependStrategy(AutoLoadStrategy... others) {
+    public MultiDependStrategy(AutoLoadable... others) {
         if (null != others && others.length > 0) {
             checkList();
-            for (AutoLoadStrategy other: mOthers) {
+            for (AutoLoadable other: mOthers) {
                 mOthers.add(other);
             }
         }
@@ -39,7 +39,7 @@ public class MultiDependStrategy implements AutoLoadStrategy {
 
     private void checkList() {
         if (null == mOthers) {
-            mOthers = new ArrayList<AutoLoadStrategy>(2);
+            mOthers = new ArrayList<AutoLoadable>(2);
         }
     }
 

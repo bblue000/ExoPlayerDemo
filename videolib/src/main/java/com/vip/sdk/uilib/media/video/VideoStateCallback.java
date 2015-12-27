@@ -52,7 +52,8 @@ public interface VideoStateCallback {
     int STATE_STOP = STATE_COMPLETION + 1;
 
     /**
-     * {@link android.media.MediaPlayer}内部异步操作时发生错误（包含错误信息）
+     * {@link android.media.MediaPlayer}内部异步操作时发生错误（包含错误信息），
+     * 紧接着会进入{@link #STATE_COMPLETION}
      */
     int STATE_ERR = STATE_STOP + 1;
     // state constants end

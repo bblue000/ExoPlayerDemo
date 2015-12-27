@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  *
- * 视频组件需要支持的功能的接口
+ * 视频控件需要支持的功能的接口，只在此做统一的声明
  *
  * <p/>
  * <p/>
@@ -14,7 +14,7 @@ import java.util.Map;
  *
  * @since 1.0
  */
-/*package*/ interface VideoPlayer {
+/*package*/ interface VideoWidget {
 
     /**
      * 设置url

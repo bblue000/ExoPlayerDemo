@@ -26,6 +26,8 @@ public class VIPVideoToken {
      */
     public Uri playUri;
 
+    public VideoStateCallback stateCb;
+
     /**
      * 视频组件{@link com.vip.sdk.videolib.VIPVideo}
      */
@@ -47,6 +49,10 @@ public class VIPVideoToken {
 
     public boolean matchUri(String uri) {
         return ObjectUtils.equals(String.valueOf(this.uri), uri);
+    }
+
+    public boolean using() {
+        return controller.videoAttached(video);
     }
 
     @Override

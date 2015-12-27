@@ -1,6 +1,6 @@
 package com.vip.sdk.uilib.media.video.autoplay;
 
-import com.vip.sdk.videolib.VIPVideo;
+import com.vip.sdk.uilib.media.video.VIPVideo;
 
 /**
  *
@@ -16,7 +16,7 @@ import com.vip.sdk.videolib.VIPVideo;
  *
  * @since 1.0
  */
-public interface AutoLoadStrategy {
+public interface AutoLoadable {
 
     /**
      * @return 指定的<code>video</code>是否能自动加载播放

@@ -19,7 +19,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content">
 
-        <VideoView
+        <com.vip.sdk.uilib.media.video.VIPVideo
             android:id="@+id/vv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>

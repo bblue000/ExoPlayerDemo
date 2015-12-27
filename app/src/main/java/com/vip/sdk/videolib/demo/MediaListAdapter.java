@@ -1,7 +1,6 @@
 package com.vip.sdk.videolib.demo;
 
 import android.content.Context;
-import android.media.MediaPlayer;
 import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,9 +15,9 @@ import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.vip.sdk.base.utils.ToastUtils;
-import com.vip.sdk.uilib.media.video.VideoState;
-import com.vip.sdk.videolib.TinyListController;
-import com.vip.sdk.videolib.VIPVideo;
+import com.vip.sdk.uilib.media.video.ListVideoController;
+import com.vip.sdk.uilib.media.video.VIPVideo;
+import com.vip.sdk.uilib.media.video.VideoStateCallback;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 
@@ -29,13 +28,13 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 /**
- * <p/>
- * <p/>
- * Created by Yin Yong on 15/12/17.
- *
- * @since 1.0
- */
-public class MediaListAdapter extends BaseAdapter implements TinyListController.TinyListCallback {
+* <p/>
+* <p/>
+* Created by Yin Yong on 15/12/17.
+*
+* @since 1.0
+*/
+public class MediaListAdapter extends BaseAdapter implements ListVideoController.VideoListCallback {
 
     public static final int VIEW_TYPE_IMAGE = 0;
     public static final int VIEW_TYPE_VIDEO = 1;
@@ -45,7 +44,7 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
     private LayoutInflater mInflater;
     private AQuery mAQuery;
     private List<MediaListInfo> mContent = new ArrayList<MediaListInfo>(20);
-    private TinyListController mTinyListController;
+    private ListVideoController mListVideoController;
 
     public MediaListAdapter(Context context) {
         mContext = context;
@@ -63,9 +62,9 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         notifyDataSetInvalidated();
     }
 
-    public void setTinyListController(TinyListController controller) {
-        mTinyListController = controller;
-        mTinyListController.tinyListCallback(this);
+    public void setListVideoController(ListVideoController controller) {
+        mListVideoController = controller;
+        mListVideoController.videoListCallback(this);
     }
 
     @Override
@@ -150,21 +149,18 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
         holder.overlayLoadingPb.setVisibility(View.GONE);
         holder.overlayProgressPb.setVisibility(View.GONE);
 
-        holder.video.setTinyController(mTinyListController);
-        holder.video.setVideoPath(info.videoUrl);
+        mListVideoController.setPath(holder.video, info.videoUrl);
 //        holder.video.setMediaController(new MediaController(mContext));
         // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
-
-        holder.video.setStateCallback(new VIPVideo.StateCallback() {
+        mListVideoController.setStateCallback(holder.video, new VideoStateCallback() {
             private Animation mAnim;
             {
                 mAnim = new AlphaAnimation(1.0f, 0f);
                 mAnim.setDuration(500);
             }
             private CountDownTimer mTimer;
-
             @Override
-            public void onStateChanged(VIPVideo video, int state) {
+            public void onStateChanged(VIPVideo video, int state, VideoState status) {
                 switch (state) {
                     case STATE_LOADING:
                         holder.overlayLoadingPb.setVisibility(View.VISIBLE);
@@ -206,34 +202,26 @@ public class MediaListAdapter extends BaseAdapter implements TinyListController.
                         holder.overlayPauseIv.setVisibility(View.GONE);
                         holder.overlayPlayIv.setVisibility(View.VISIBLE);
                         break;
+                    case STATE_LOAD_ERR:
+                    case STATE_ERR:
+                        Log.e("yytest", "err {" + status.code + ", " + status.extraCode + "}");
+                        ToastUtils.showToast(status.message);
+                        break;
                 }
-            }
-
-            @Override
-            public void onLoadErr(VIPVideo video, VideoState status) {
-                ToastUtils.showToast(status.message);
             }
         });
 
         holder.overlayPlayIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                holder.video.start();
+                mListVideoController.start(holder.video);
             }
         });
 
         holder.overlayPauseIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                holder.video.pause();
-            }
-        });
-
-        holder.video.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                Log.e("yytest", "err {" + what + ", " + extra + "}");
-                return true;
+                mListVideoController.pause(holder.video);
             }
         });
         return convertView;

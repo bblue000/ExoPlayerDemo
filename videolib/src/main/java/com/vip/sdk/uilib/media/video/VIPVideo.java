@@ -20,6 +20,9 @@ import java.util.Map;
 /**
  * 包装一些逻辑。
  *
+ * 原生{@link android.widget.VideoView}对一些状态是没有公开的，为了更全面的控制视频的播放状态，
+ * 将{@link android.widget.VideoView}部分逻辑代码模拟出来，以支持一些功能的实现。
+ *
  * <br/>
  *
  * 用一层ViewGroup包装并提供给外部使用，有较好的兼容性；
@@ -31,9 +34,9 @@ import java.util.Map;
  *
  * @since 1.0
  */
-public class VIPVideo extends RelativeLayout implements VideoPlayer {
+public class VIPVideo extends RelativeLayout implements VideoWidget {
 
-    private static final String TAG = VIPVideo.class.getSimpleName();
+    private static final String TAG = VIPVideoDebug.TAG;//VIPVideo.class.getSimpleName();
     private static final boolean DEBUG = VIPVideoDebug.VIEW;
 
     // all possible internal states
@@ -160,7 +163,7 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
          * Called when the media file is ready for playback.
          *
          * @param video the VIPVideo that is ready for playback
-         * @param mp the MediaPlayer that is ready for playback
+         * @param mp    the MediaPlayer that is ready for playback
          */
         void onPrepared(VIPVideo video, MediaPlayer mp);
     }
@@ -184,7 +187,7 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
          * Called when the end of a media source is reached during playback.
          *
          * @param video the VIPVideo that is ready for playback
-         * @param mp the MediaPlayer that reached the end of the file
+         * @param mp    the MediaPlayer that reached the end of the file
          */
         void onCompletion(VIPVideo video, MediaPlayer mp);
     }
@@ -208,6 +211,7 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
         /**
          * Called to indicate an error.
          *
+         * @param video   the VIPVideo that is ready for playback
          * @param mp      the MediaPlayer the error pertains to
          * @param what    the type of error that has occurred:
          * <ul>
@@ -324,7 +328,7 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
 
     @Override
     public void start() {
-        if (!isInPlaybackState()) {
+        if (isInPlaybackState()) {
             mVideoView.start();
             mCurrentState = STATE_PLAYING;
         }
@@ -402,10 +406,18 @@ public class VIPVideo extends RelativeLayout implements VideoPlayer {
         return mToken;
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        if (null != getToken()) {
+            getToken().controller.detachVideo(this);
+        }
+        super.onDetachedFromWindow();
+    }
+
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
-            if (DEBUG) Log.d("yytest", this + " prepared");
+            if (DEBUG) Log.d(TAG, this + " prepared");
 
             mCurrentState = STATE_PREPARED;
 
