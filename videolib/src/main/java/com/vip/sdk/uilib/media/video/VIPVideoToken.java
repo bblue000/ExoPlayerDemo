@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * 封装被{@link com.vip.sdk.uilib.media.video.VideoController}管理的视频
- * {@link com.vip.sdk.uilib.media.video.VIPVideo}及其资源等信息
+ * （{@link com.vip.sdk.uilib.media.video.VIPVideo}）及其资源等信息
  *
  *
  * Created by Yin Yong on 15/12/27.
@@ -28,7 +28,7 @@ public class VIPVideoToken {
      */
     /*package*/ Uri playUri;
 
-    /*package*/ VideoStateCallback stateCb;
+    /*package*/ VideoControlCallback stateCb;
     // temp data end
 
     /**
@@ -105,6 +105,11 @@ public class VIPVideoToken {
     @Override
     public String toString() {
         return "video token { " + video + " }";
+    }
+
+    // a token just like a real video, can do whatever videos are able
+    /*package*/ void setVideoURI(Uri uri, Map<String, String> headers) {
+        setUri(uri, headers);
     }
 
 }

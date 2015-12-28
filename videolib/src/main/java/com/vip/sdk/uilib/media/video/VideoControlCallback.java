@@ -2,8 +2,9 @@ package com.vip.sdk.uilib.media.video;
 
 /**
  *
- * 播放状态的回调。需要用{@link VideoController}中的方法给
- * {@link VIPVideo}设置监听回调。
+ * 播放状态的回调。
+ *
+ * 需要用{@link VideoController}中的方法给{@link VIPVideo}设置监听回调。
  *
  * <br/>
  *
@@ -11,9 +12,9 @@ package com.vip.sdk.uilib.media.video;
  *
  * Created by Yin Yong on 15/12/27.
  *
- * @see VideoController#setStateCallback(VIPVideo, VideoStateCallback)
+ * @see VideoController#setStateCallback(VIPVideo, VideoControlCallback)
  */
-public interface VideoStateCallback {
+public interface VideoControlCallback {
 
     // state constants start
     /**
@@ -47,13 +48,37 @@ public interface VideoStateCallback {
     int STATE_COMPLETION = STATE_PAUSE + 1;
 
     /**
-     * 进入停止状态（已播放完成）
+     * 进入停止状态（主动被停止，或者已播放完成）
      */
     int STATE_STOP = STATE_COMPLETION + 1;
 
     /**
      * {@link android.media.MediaPlayer}内部异步操作时发生错误（包含错误信息），
-     * 紧接着会进入{@link #STATE_COMPLETION}
+     * 紧接着会进入{@link #STATE_COMPLETION}。
+     *
+     * <br/>
+     *
+     * <ul>
+     *     <li>
+     *         code: <br/>
+     *         the type of error that has occurred:
+     *         <ul>
+     *             <li>{@link android.media.MediaPlayer#MEDIA_ERROR_UNKNOWN}</li>
+     *             <li>{@link android.media.MediaPlayer#MEDIA_ERROR_SERVER_DIED}</li>
+     *         </ul>
+     *     </li>
+     *     <li>
+     *         extraCode:<br/>
+     *         an extra code, specific to the error. Typically implementation dependent.
+     *         <ul>
+     *             <li>{@link android.media.MediaPlayer#MEDIA_ERROR_IO}</li>
+     *             <li>{@link android.media.MediaPlayer#MEDIA_ERROR_MALFORMED}</li>
+     *             <li>{@link android.media.MediaPlayer#MEDIA_ERROR_UNSUPPORTED}</li>
+     *             <li>{@link android.media.MediaPlayer#MEDIA_ERROR_TIMED_OUT}</li>
+     *         </ul>
+     *     </li>
+     * </ul>
+     *
      */
     int STATE_ERR = STATE_STOP + 1;
     // state constants end
@@ -64,6 +89,14 @@ public interface VideoStateCallback {
      * @param status 有的状态包含状态信息，将在触发相应状态时给出，参见不同状态说明
      */
     void onStateChanged(VIPVideo video, int state, VideoStatus status);
+
+    /**
+     * 加载过程回调
+     *
+     * @param current 已经加载的大小
+     * @param total 总资源大小
+     */
+    void onLoadProgress(VIPVideo video, String url, long current, long total);
 
     /**
      *

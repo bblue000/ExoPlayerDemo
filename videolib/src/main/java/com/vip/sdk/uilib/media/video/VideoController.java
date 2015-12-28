@@ -42,6 +42,10 @@ public abstract class VideoController implements VideoWidgetDelegate {
     static final String TAG = VIPVideoDebug.TAG; // VideoController.class.getSimpleName();
     static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
 
+    public interface VideoLoadProgressListener {
+        void onLoadProgress(VIPVideo video, String url, long current, long total);
+    }
+
     private LinkedHashMap<VIPVideo, VIPVideoToken> mVideoInfoMap = new LinkedHashMap<VIPVideo, VIPVideoToken>();
     private VideoCache mVideoCache;
     private AutoLoadable mAutoLoadable;
@@ -129,12 +133,12 @@ public abstract class VideoController implements VideoWidgetDelegate {
     }
 
     @Override
-    public void setStateCallback(VIPVideo video, VideoStateCallback callback) {
+    public void setStateCallback(VIPVideo video, VideoControlCallback callback) {
         attachVideo(video);
         VIPVideoToken token = video.getToken();
         token.stateCb = callback;
         if (null != token.stateCb && token.video.isPlaying()) {
-            postDo(VideoStateCallback.STATE_START, token, null);
+            postDo(VideoControlCallback.STATE_START, token, null);
         }
     }
     // video operation API end
@@ -237,7 +241,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         }
         mPlaying.set(token, manual);
         if (dispatchDownload(token, manual)) {
-            postDo(VideoStateCallback.STATE_LOADING, token, null);
+            postDo(VideoControlCallback.STATE_LOADING, token, null);
         }
     }
 
@@ -287,7 +291,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
     protected void doVideoStart(VIPVideoToken token) {
         token.video.start();
-        postDo(VideoStateCallback.STATE_START, token, null);
+        postDo(VideoControlCallback.STATE_START, token, null);
     }
 
     protected void doVideoSeekTo(VIPVideoToken token, int msec) {
@@ -298,14 +302,14 @@ public abstract class VideoController implements VideoWidgetDelegate {
         boolean isPlaying = token.video.isPlaying();
         token.video.pause(); // just do pause
         if (isPlaying ^ token.video.isPlaying()) {
-            postDo(VideoStateCallback.STATE_PAUSE, token, null);
+            postDo(VideoControlCallback.STATE_PAUSE, token, null);
         }
     }
 
     protected void doVideoStop(VIPVideoToken token) {
         token.video.stop();
         // 无论如何都发送一个停止的回调
-        postDo(VideoStateCallback.STATE_STOP, token, null);
+        postDo(VideoControlCallback.STATE_STOP, token, null);
     }
 
     /**
@@ -314,7 +318,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * @param force 如果视频资源尚未加载成功，是否强制加载（即使{@link #getAutoPlayStrategy()#autoLoad(VIPVideo)}返回false）
      *
      * @return 返回true表明需要下载，后续将会通过{@link #onVideoDownloaded(VIPVideoToken, String, android.net.Uri)}
-     * 或者{@link #onVideoLoadFailed(VIPVideoToken, String, VideoStateCallback.VideoStatus)}
+     * 或者{@link #onVideoLoadFailed(VIPVideoToken, String, VideoControlCallback.VideoStatus)}
      * 等相关方法返回结果。
      */
     protected boolean dispatchDownload(VIPVideoToken token, boolean force) {
@@ -336,7 +340,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 当设置了本地播放资源，视频控件反馈可以播放时调用
      */
     protected void onVideoPrepared(VIPVideoToken token) {
-        postDo(VideoStateCallback.STATE_PREPARED, token, null);
+        postDo(VideoControlCallback.STATE_PREPARED, token, null);
         // 看看是否是当前项加载好了
         if (mPlaying.match(token) && null != mPlaying.token.playUri) {
             mPlaying.prepared = true;
@@ -350,7 +354,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 当设置了本地播放资源，视频控件反馈播放完成时调用
      */
     protected void onVideoPlayCompleted(VIPVideoToken token) {
-        postDo(VideoStateCallback.STATE_COMPLETION, token, null);
+        postDo(VideoControlCallback.STATE_COMPLETION, token, null);
     }
 
     /**
@@ -358,9 +362,9 @@ public abstract class VideoController implements VideoWidgetDelegate {
      *
      * @return 如果做了一定的处理，则返回true，否则返回false
      */
-    protected boolean onVideoPlayError(VIPVideoToken token, VideoStateCallback.VideoStatus state) {
+    protected boolean onVideoPlayError(VIPVideoToken token, VideoControlCallback.VideoStatus state) {
         if (DEBUG) Log.e(TAG, String.valueOf(state));
-        postDo(VideoStateCallback.STATE_ERR, token, state);
+        postDo(VideoControlCallback.STATE_ERR, token, state);
         onVideoPlayCompleted(token);
         return true;
     }
@@ -414,32 +418,32 @@ public abstract class VideoController implements VideoWidgetDelegate {
     /**
      * 视频缓存出错时调用
      */
-    protected void onVideoLoadFailed(VIPVideoToken token, String uri, VideoStateCallback.VideoStatus status) {
+    protected void onVideoLoadFailed(VIPVideoToken token, String uri, VideoControlCallback.VideoStatus status) {
         if (mPlaying.match(token, uri) && null == mPlaying.token.playUri) {
             // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
             if (DEBUG) Log.e(TAG, "onVideoLoadFailed");
             // send message
-            postDo(VideoStateCallback.STATE_LOAD_ERR, token, status);
+            postDo(VideoControlCallback.STATE_LOAD_ERR, token, status);
         }
     }
 
     private VideoCache.CacheCallback mCacheCallback = new VideoCache.CacheCallback() {
 
         @Override
-        public void onProgress(VIPVideoToken info, String uri, long current, long total) {
+        public void onCacheProgress(VIPVideoToken token, String uri, long current, long total) {
             // do nothing here
         }
 
         @Override
-        public void onSuccess(VIPVideoToken token, String uri, Uri target) {
+        public void onCacheSuccess(VIPVideoToken token, String uri, Uri target) {
             if (DEBUG) Log.d(TAG, uri.substring(uri.lastIndexOf("/") + 1) + "下载好了");
             onVideoDownloaded(token, uri, target);
         }
 
         @Override
-        public void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoStatus status) {
+        public void onCacheFailed(VIPVideoToken token, String uri, VideoControlCallback.VideoStatus status) {
             if (DEBUG) Log.d(TAG, uri.substring(uri.lastIndexOf("/") + 1) + "下载失败了");
-            onVideoLoadFailed(info, uri, status);
+            onVideoLoadFailed(token, uri, status);
         }
 
     };
@@ -467,7 +471,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         @Override
         public boolean onError(VIPVideo video, MediaPlayer mp, int what, int extra) {
             if (videoAttached(video)) {
-                return onVideoPlayError(video.getToken(), new VideoStateCallback.VideoStatus(what, "").extraCode(extra));
+                return onVideoPlayError(video.getToken(), new VideoControlCallback.VideoStatus(what, "error").extraCode(extra));
             }
             return false;
         }
@@ -520,7 +524,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
             if (msg.obj instanceof MergeToken) {
                 MergeToken token = (MergeToken) msg.obj;
                 if (null != token.target.stateCb) {
-                    token.target.stateCb.onStateChanged(token.target.video, msg.what, (VideoStateCallback.VideoStatus) token.param);
+                    token.target.stateCb.onStateChanged(token.target.video, msg.what, (VideoControlCallback.VideoStatus) token.param);
                 }
             } else {
                 VIPVideoToken token = (VIPVideoToken) msg.obj;

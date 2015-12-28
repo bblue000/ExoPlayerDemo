@@ -12,7 +12,7 @@ import com.vip.sdk.base.file.FileManagerUtils;
 import com.vip.sdk.base.utils.ObjectUtils;
 import com.vip.sdk.uilib.media.video.VIPVideoDebug;
 import com.vip.sdk.uilib.media.video.VIPVideoToken;
-import com.vip.sdk.uilib.media.video.VideoStateCallback;
+import com.vip.sdk.uilib.media.video.VideoControlCallback;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -260,7 +260,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         // 这边处理已有文件缓存的逻辑，不依赖于AQuery的文件缓存的处理方式
         if (checkMayExistTargetFile(url, token, mTargetFile)) {
             if (DEBUG) Log.w(TAG , "执行前检测 target file exists = " + url);
-            callback(url, mTargetFile, status.code(200).message("ok"));
+            callback(url, mTargetFile, status.code(200).message("OK"));
             return ;
         }
 
@@ -311,6 +311,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
     @Override
     protected void copy(InputStream is, OutputStream os, int max, File tempFile, File destFile,
                         HttpClient client, HttpUriRequest hr, HttpResponse response) throws IOException {
+        final long lastFileSize = FileManagerUtils.caculateFileSize(tempFile);
         // 从网络请求的输入流中读取数据
         try {
             byte[] b = new byte[mBufferSize];
@@ -323,34 +324,34 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
             while((read = is.read(b)) != -1){
                 os.write(b, 0, read);
                 readCount += read;
-                if (readCount - lastSlot >= mSlotSize) {
-                    lastSlot = readCount;
+                // publish progress
+                publishProgress(getUrl(), mToken.get(), mCallback, readCount + lastFileSize, max + lastFileSize);
 
+                if (readCount - lastSlot >= mSlotSize) {
                     // 进行一次检测
                     if (DEBUG) Log.d(TAG , "检测....");
                     if (!checkNeedGoon(getUrl(), mToken.get())) {
                         if (DEBUG) Log.w(TAG , "检测 cancel = " + getUrl());
                         return ; // 如果没有等待当前url下载结果的项了，则直接返回，不再下载
                     }
+                    lastSlot = readCount;
                 }
             }
 
             tempFile.renameTo(destFile);
         } catch (IOException e) {
-            AQUtility.debug("copy failed, deleting files");
+            if (DEBUG) Log.d(TAG , "copy failed, deleting files");
 
             //copy is a failure, delete everything but temp file
             // tempFile.delete();
             FileManagerUtils.deleteFile(destFile, true);
             throw e;
         } finally {
-            if (DEBUG) Log.w(TAG , "release io1");
             AQUtility.close(os);
 
             abortRequest(client, hr, response);
 
             AQUtility.close(is);
-            if (DEBUG) Log.w(TAG , "release io2");
         }
     }
 
@@ -383,6 +384,15 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
     }
 
     // 公共方法封装
+    protected static void publishProgress(String url, VIPVideoToken token,
+                                          VideoCache.CacheCallback cb,
+                                          long current, long total) {
+        if (null == token || null == cb) return;
+
+        if (DEBUG) Log.d(TAG, "publishProgress ("+ current + ", " + total + ")");
+        cb.onCacheProgress(token, url, Math.max(0, current), Math.max(0, total));
+    }
+
     protected static void callback(String url, VIPVideoToken myToken,
                                    File target, AjaxStatus status,
                                    VideoCache.CacheCallback myCallback) {
@@ -413,9 +423,9 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         if (DEBUG) Log.d(TAG, "checkCb matchUri = " + token.matchUri(url));
         if (token.matchUri(url)) { // 这边只检查是否是相同的url，不对是否还被管理进行判断
             if (null != target) {
-                cb.onSuccess(token, url, Uri.fromFile(target));
+                cb.onCacheSuccess(token, url, Uri.fromFile(target));
             } else {
-                cb.onFailed(token, url, new VideoStateCallback.VideoStatus(status.getCode(), status.getMessage()));
+                cb.onCacheFailed(token, url, new VideoControlCallback.VideoStatus(status.getCode(), status.getMessage()));
             }
         }
     }

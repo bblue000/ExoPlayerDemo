@@ -17,7 +17,7 @@ import com.androidquery.AQuery;
 import com.vip.sdk.base.utils.ToastUtils;
 import com.vip.sdk.uilib.media.video.ListVideoController;
 import com.vip.sdk.uilib.media.video.VIPVideo;
-import com.vip.sdk.uilib.media.video.VideoStateCallback;
+import com.vip.sdk.uilib.media.video.VideoControlCallback;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 
@@ -152,7 +152,7 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
         mListVideoController.setVideoPath(holder.video, info.videoUrl);
 //        holder.video.setMediaController(new MediaController(mContext));
         // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
-        mListVideoController.setStateCallback(holder.video, new VideoStateCallback() {
+        mListVideoController.setStateCallback(holder.video, new VideoControlCallback() {
             private Animation mAnim;
             {
                 mAnim = new AlphaAnimation(1.0f, 0f);

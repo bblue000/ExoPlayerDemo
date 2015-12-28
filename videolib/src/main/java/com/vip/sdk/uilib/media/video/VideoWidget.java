@@ -191,5 +191,5 @@ import java.util.Map;
     /**
      * 给指定的视频控件设置状态回调接口
      */
-    void setStateCallback(VIPVideo video, VideoStateCallback callback);
+    void setStateCallback(VIPVideo video, VideoControlCallback callback);
 }

@@ -66,7 +66,7 @@ public class SingleVideoController extends VideoController {
         super.stop(mSingle);
     }
 
-    public void setStateCallback(VideoStateCallback callback) {
+    public void setStateCallback(VideoControlCallback callback) {
         super.setStateCallback(mSingle, callback);
     }
 }
