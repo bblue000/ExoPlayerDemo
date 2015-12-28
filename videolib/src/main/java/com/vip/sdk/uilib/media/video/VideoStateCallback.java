@@ -2,8 +2,8 @@ package com.vip.sdk.uilib.media.video;
 
 /**
  *
- * 播放状态的回调。需要用{@link com.vip.sdk.uilib.media.video.VideoController}中的方法给
- * {@link com.vip.sdk.uilib.media.video.VIPVideo}设置监听回调。
+ * 播放状态的回调。需要用{@link VideoController}中的方法给
+ * {@link VIPVideo}设置监听回调。
  *
  * <br/>
  *
@@ -11,7 +11,7 @@ package com.vip.sdk.uilib.media.video;
  *
  * Created by Yin Yong on 15/12/27.
  *
- * @see com.vip.sdk.uilib.media.video.VideoController#setStateCallback(VIPVideo, VideoStateCallback)
+ * @see VideoController#setStateCallback(VIPVideo, VideoStateCallback)
  */
 public interface VideoStateCallback {
 
@@ -63,7 +63,7 @@ public interface VideoStateCallback {
      *
      * @param status 有的状态包含状态信息，将在触发相应状态时给出，参见不同状态说明
      */
-    void onStateChanged(VIPVideo video, int state, VideoState status);
+    void onStateChanged(VIPVideo video, int state, VideoStatus status);
 
     /**
      *
@@ -75,7 +75,7 @@ public interface VideoStateCallback {
      *
      * @since 1.0
      */
-    public class VideoState {
+    class VideoStatus {
 
         /**
          * 基本包含信息，信息码
@@ -92,12 +92,12 @@ public interface VideoStateCallback {
          */
         public int extraCode;
 
-        public VideoState(int code, String message) {
+        public VideoStatus(int code, String message) {
             this.code = code;
             this.message = message;
         }
 
-        public VideoState(int code, String message, int extraCode) {
+        public VideoStatus(int code, String message, int extraCode) {
             this.code = code;
             this.message = message;
             this.extraCode = extraCode;
@@ -108,7 +108,7 @@ public interface VideoStateCallback {
          *
          * @return 当前对象
          */
-        public VideoState extraCode(int extraCode) {
+        public VideoStatus extraCode(int extraCode) {
             this.extraCode = extraCode;
             return this;
         }

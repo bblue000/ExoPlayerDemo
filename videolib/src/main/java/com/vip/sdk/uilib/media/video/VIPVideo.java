@@ -102,6 +102,39 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         }
     }
 
+    // 当设置资源的时候再添加该组件
+    private void addTinyVideo() {
+        removeVideoView();
+
+        checkInitVideoView();
+        ViewGroup.LayoutParams parentLp = getLayoutParams();
+        if (null != parentLp) { // 如果父容器的宽高不是绝对值，从父容器中赋值宽高
+            if (parentLp.width < 0) {
+                mVideoViewLP.width = parentLp.width;
+            }
+            if (parentLp.height < 0) {
+                mVideoViewLP.height = parentLp.height;
+            }
+        }
+        // config
+        mVideoView.setOnPreparedListener(mPreparedListener);
+        mVideoView.setOnErrorListener(mErrorListener);
+        mVideoView.setOnCompletionListener(mCompletionListener);
+        addView(mVideoView, mVideoViewLP);
+    }
+
+    private void removeVideoView() {
+        final int childCount = getChildCount();
+        if (null != mVideoView) {
+            mVideoView.setOnPreparedListener(null);
+            mVideoView.setOnErrorListener(null);
+            mVideoView.setOnCompletionListener(null);
+        }
+        if (childCount > 0) {
+            removeAllViews();
+        }
+    }
+
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
@@ -245,39 +278,6 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         mOnErrorListener = l;
     }
 
-    // 当设置资源的时候再添加该组件
-    private void addTinyVideo() {
-        removeVideoView();
-
-        checkInitVideoView();
-        ViewGroup.LayoutParams parentLp = getLayoutParams();
-        if (null != parentLp) { // 如果父容器的宽高不是绝对值，从父容器中赋值宽高
-            if (parentLp.width < 0) {
-                mVideoViewLP.width = parentLp.width;
-            }
-            if (parentLp.height < 0) {
-                mVideoViewLP.height = parentLp.height;
-            }
-        }
-        // config
-        mVideoView.setOnPreparedListener(mPreparedListener);
-        mVideoView.setOnErrorListener(mErrorListener);
-        mVideoView.setOnCompletionListener(mCompletionListener);
-        addView(mVideoView, mVideoViewLP);
-    }
-
-    private void removeVideoView() {
-        final int childCount = getChildCount();
-        if (null != mVideoView) {
-            mVideoView.setOnPreparedListener(null);
-            mVideoView.setOnErrorListener(null);
-            mVideoView.setOnCompletionListener(null);
-        }
-        if (childCount > 0) {
-            removeAllViews();
-        }
-    }
-
     @Override
     public void setVideoPath(String url) {
         setVideoURI(Uri.parse(url));
@@ -399,10 +399,10 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     }
 
     private VIPVideoToken mToken;
-    protected void setToken(VIPVideoToken token) {
+    /*package*/ void setToken(VIPVideoToken token) {
         mToken = token;
     }
-    protected VIPVideoToken getToken() {
+    /*package*/ VIPVideoToken getToken() {
         return mToken;
     }
 

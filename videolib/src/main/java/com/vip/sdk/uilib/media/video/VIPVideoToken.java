@@ -21,20 +21,23 @@ public class VIPVideoToken {
     public Uri uri;
     public Map<String, String> headers;
 
+    // temp data start
+    /*package*/ int seekTo;
     /**
      * 视频信息中当前设置的视频资源的本地资源地址
      */
-    public Uri playUri;
+    /*package*/ Uri playUri;
 
-    public VideoStateCallback stateCb;
+    /*package*/ VideoStateCallback stateCb;
+    // temp data end
 
     /**
-     * 视频组件{@link com.vip.sdk.videolib.VIPVideo}
+     * 视频组件{@link VIPVideo}
      */
     public final VIPVideo video;
 
     /**
-     * 管理该视频信息的{@link com.vip.sdk.videolib.TinyController}
+     * 管理该视频信息的{@link VideoController}
      */
     public final VideoController controller;
 
@@ -43,14 +46,47 @@ public class VIPVideoToken {
         this.video = video;
     }
 
-    public boolean matchUri(Uri uri) {
+    /**
+     * 更新信息
+     *
+     * <br/>
+     *
+     * 由于获取和设置可能在不同线程，增加同步关键字
+     */
+    /*package*/ synchronized void setUri(Uri uri, Map<String, String> headers) {
+        this.headers = headers;
+        if (!matchUri(uri)) { // 如果URL不一样
+            this.uri = uri;
+            this.playUri = null;
+        }
+        this.seekTo = 0; // reset
+    }
+
+    /**
+     * <code>uri</code>是否跟当前信息中的{@link #uri}一致。
+     *
+     * <br/>
+     *
+     * 由于获取和设置可能在不同线程，增加同步关键字
+     */
+    public synchronized boolean matchUri(Uri uri) {
         return ObjectUtils.equals(this.uri, uri);
     }
 
-    public boolean matchUri(String uri) {
-        return ObjectUtils.equals(String.valueOf(this.uri), uri);
+    /**
+     * <code>uri</code>是否跟当前信息中的{@link #uri}一致
+     *
+     * <br/>
+     *
+     * 由于可能获取和设置在不同线程，增加同步关键字
+     */
+    public synchronized boolean matchUri(String uri) {
+        return (null == this.uri && null == uri) || ObjectUtils.equals(String.valueOf(this.uri), uri);
     }
 
+    /**
+     * 判断是否仍在被使用着
+     */
     public boolean using() {
         return controller.videoAttached(video);
     }
@@ -61,7 +97,9 @@ public class VIPVideoToken {
             return false;
         }
         VIPVideoToken another = (VIPVideoToken) o;
-        return ObjectUtils.equals(this.video, another.video);
+        return ObjectUtils.equals(this.video, another.video)
+                &&
+                ObjectUtils.equals(this.controller, another.controller);
     }
 
     @Override

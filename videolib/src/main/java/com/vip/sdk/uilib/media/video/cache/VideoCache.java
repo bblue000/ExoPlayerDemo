@@ -60,7 +60,7 @@ public interface VideoCache {
          * @param info 视频信息
          * @param status 失败信息
          */
-        void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoState status) ;
+        void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoStatus status) ;
 
     }
 
@@ -70,6 +70,6 @@ public interface VideoCache {
     class SimpleCacheCallback implements CacheCallback {
         @Override public void onProgress(VIPVideoToken info, String uri, long current, long total) { }
         @Override public void onSuccess(VIPVideoToken info, String uri, Uri target) { }
-        @Override public void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoState status) { }
+        @Override public void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoStatus status) { }
     }
 }

@@ -149,7 +149,7 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
         holder.overlayLoadingPb.setVisibility(View.GONE);
         holder.overlayProgressPb.setVisibility(View.GONE);
 
-        mListVideoController.setPath(holder.video, info.videoUrl);
+        mListVideoController.setVideoPath(holder.video, info.videoUrl);
 //        holder.video.setMediaController(new MediaController(mContext));
         // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
         mListVideoController.setStateCallback(holder.video, new VideoStateCallback() {
@@ -160,7 +160,7 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
             }
             private CountDownTimer mTimer;
             @Override
-            public void onStateChanged(VIPVideo video, int state, VideoState status) {
+            public void onStateChanged(VIPVideo video, int state, VideoStatus status) {
                 switch (state) {
                     case STATE_LOADING:
                         holder.overlayLoadingPb.setVisibility(View.VISIBLE);

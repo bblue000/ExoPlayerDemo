@@ -1,29 +1,12 @@
 package com.vip.test.exoplayerdemo;
 
 import android.app.Activity;
-import android.media.MediaPlayer;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.MemoryFile;
-import android.view.ViewGroup;
 import android.widget.RelativeLayout;
-import android.widget.VideoView;
 
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.vip.sdk.uilib.media.video.SingleVideoController;
 import com.vip.sdk.uilib.media.video.VIPVideo;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import com.vip.sdk.videolib.demo.MediaListManager;
 
 /**
  * something
@@ -66,11 +49,13 @@ public class Test extends Activity {
 //            }
 //        }, 1000);
 
-        SingleVideoController videoController = new SingleVideoController(vv);
-        videoController.setPath(vv, "http://192.168.1.111/public/vip1.mp4");
         //vv.setVideoPath("http://192.168.1.111/public/vip1.mp4");
         //vv.start();
-        videoController.start(vv);
+        SingleVideoController videoController = new SingleVideoController(vv);
+        videoController.setVideoPath("http://" + MediaListManager.IP + "/public/vip1.mp4");
+
+//        videoController.seekTo(15000);
+//        videoController.start();
 
 //        final File file = new File(Environment.getExternalStorageDirectory(), "yytest");
 //        vv.setVideoURI(Uri.fromFile(file));

@@ -48,6 +48,7 @@ import java.util.WeakHashMap;
 public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallback> {
 
     private static final boolean DEBUG = VIPVideoDebug.CACHE;
+    private static final String TAG = VIPVideoDebug.TAG;
 
     public static File CACHE_DIR;
     /**
@@ -86,11 +87,6 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
      * 下载
      */
     public static void download(VIPVideoToken token, VideoCache.CacheCallback callback) {
-        if (null == token || null == token.uri) { // 容错处理
-            callback.onFailed(token, "", new VideoStateCallback.VideoState(-1, "null"));
-            return;
-        }
-
         String url = String.valueOf(token.uri);
 
         // 文件不存在，则需要下载
@@ -130,8 +126,8 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
 
     protected static boolean checkDiffUrlForVideoToken(String url, VIPVideoToken token) {
         String oldUrl = videoMap.get(token);
-        if (DEBUG) Log.w("yytest" , "old url = " + oldUrl);
-        if (DEBUG) Log.e("yytest", "new url = " + url);
+        if (DEBUG) Log.w(TAG , "old url = " + oldUrl);
+        if (DEBUG) Log.e(TAG, "new url = " + url);
         if (!ObjectUtils.equals(oldUrl, url)) { // 如果url改变了
             Map<?, ?> urlVideoMap = queueMap.get(oldUrl);
             if (null != urlVideoMap) {
@@ -151,18 +147,18 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         WeakHashMap<VIPVideoToken, VideoCache.CacheCallback> vs = queueMap.get(url);
         if (vs == null) {
             if (queueMap.containsKey(url)) { // 如果有其他的相同请求过来，加入map中
-                if (DEBUG) Log.e("yytest" , "count + 1, url = " + url);
+                if (DEBUG) Log.e(TAG , "count + 1, url = " + url);
                 vs = new WeakHashMap<VIPVideoToken, VideoCache.CacheCallback>();
                 vs.put(token, callback);
                 queueMap.put(url, vs);
             } else {
-                if (DEBUG) Log.e("yytest" , "first one, url = " + url);
+                if (DEBUG) Log.e(TAG , "first one, url = " + url);
                 // 仅仅注册这个url，说明已经有下载队列了
                 queueMap.put(url, null);
             }
         } else {
             //add to list of image views
-            if (DEBUG) Log.e("yytest" , "count + 1, url = " + url);
+            if (DEBUG) Log.e(TAG , "count + 1, url = " + url);
             vs.put(token, callback);
         }
     }
@@ -244,7 +240,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
 
     @Override
     public void async(Context context) {
-        if (DEBUG) Log.d("yytest" , "pending enqueue = " + getUrl());
+        if (DEBUG) Log.d(TAG , "pending enqueue = " + getUrl());
         super.async(context);
     }
 
@@ -254,24 +250,24 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
         VIPVideoToken token = mToken.get();
 
         // 有可能在队列中存在时间较长，执行时检查是否要直接return
-        if (DEBUG) Log.d("yytest" , "执行前检测....");
+        if (DEBUG) Log.d(TAG , "执行前检测....");
         if (!checkNeedGoon(url, token)) {
-            if (DEBUG) Log.w("yytest" , "执行前检测 cancel = " + url);
+            if (DEBUG) Log.w(TAG , "执行前检测 cancel = " + url);
             callback(url, null, status.code(-1).message("canceled; no pending request"));
             return;
         }
 
         // 这边处理已有文件缓存的逻辑，不依赖于AQuery的文件缓存的处理方式
         if (checkMayExistTargetFile(url, token, mTargetFile)) {
-            if (DEBUG) Log.w("yytest" , "执行前检测 target file exists = " + url);
+            if (DEBUG) Log.w(TAG , "执行前检测 target file exists = " + url);
             callback(url, mTargetFile, status.code(200).message("ok"));
             return ;
         }
 
         // 根据目标文件，判断临时文件，放到这边，有IO操作也不怕
-        if (DEBUG) Log.d("yytest" , "target file ? " + mTargetFile.exists() + ", " + mTargetFile);
+        if (DEBUG) Log.d(TAG , "target file ? " + mTargetFile.exists() + ", " + mTargetFile);
         mTempFile = new File(mTargetFile + ".tmp");
-        if (DEBUG) Log.d("yytest" , "temp file ? " + mTempFile.exists() + ", " + mTempFile);
+        if (DEBUG) Log.d(TAG , "temp file ? " + mTempFile.exists() + ", " + mTempFile);
         if (FileManagerUtils.exists(mTempFile)) {
             // 临时文件仍存在，删除目标文件
             FileManagerUtils.deleteFile(mTargetFile, true);
@@ -279,14 +275,14 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
             // 如果临时文件仍存在，则加入断点续传的字段
             long size = mTempFile.length();
             header("Range", "bytes=" + size + "-");
-            if (DEBUG) Log.d("yytest" , "temp file size = " + size);
+            if (DEBUG) Log.d(TAG , "temp file size = " + size);
         }
 
         if (null != token) {
             headersAppend(token.headers);
         }
 
-        if (DEBUG) Log.d("yytest" , "pending load = " + getUrl());
+        if (DEBUG) Log.d(TAG , "pending load = " + getUrl());
         super.run();
     }
 
@@ -308,7 +304,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
     protected OutputStream makeTempFileOutput(File tempFile, HttpClient client, HttpUriRequest hr,
                                               HttpResponse response) throws IOException {
         boolean isBreakPointSupport = isBeakPointDownload(response);
-        if (DEBUG) Log.d("yytest" , "makeTempFileOutput isBreakPointSupport = " + isBreakPointSupport);
+        if (DEBUG) Log.d(TAG , "makeTempFileOutput isBreakPointSupport = " + isBreakPointSupport);
         return new BufferedOutputStream(new FileOutputStream(tempFile, isBreakPointSupport));
     }
 
@@ -331,9 +327,9 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
                     lastSlot = readCount;
 
                     // 进行一次检测
-                    if (DEBUG) Log.d("yytest" , "检测....");
+                    if (DEBUG) Log.d(TAG , "检测....");
                     if (!checkNeedGoon(getUrl(), mToken.get())) {
-                        if (DEBUG) Log.w("yytest" , "检测 cancel = " + getUrl());
+                        if (DEBUG) Log.w(TAG , "检测 cancel = " + getUrl());
                         return ; // 如果没有等待当前url下载结果的项了，则直接返回，不再下载
                     }
                 }
@@ -348,13 +344,13 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
             FileManagerUtils.deleteFile(destFile, true);
             throw e;
         } finally {
-            if (DEBUG) Log.w("yytest" , "release io1");
+            if (DEBUG) Log.w(TAG , "release io1");
             AQUtility.close(os);
 
             abortRequest(client, hr, response);
 
             AQUtility.close(is);
-            if (DEBUG) Log.w("yytest" , "release io2");
+            if (DEBUG) Log.w(TAG , "release io2");
         }
     }
 
@@ -375,7 +371,7 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
 
     @Override
     public void callback(String url, File object, AjaxStatus status) {
-        if (DEBUG) Log.d("yytest" , "callback result = " + object);
+        if (DEBUG) Log.d(TAG , "callback result = " + object);
 
         VIPVideoToken myToken = mToken.get();
         callback(url, myToken, object, status, mCallback);
@@ -414,12 +410,12 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
                                   VideoCache.CacheCallback cb) {
         if (null == token || null == cb) return;
 
-        if (DEBUG) Log.d("yytest", "checkCb matchUri = " + token.matchUri(url));
+        if (DEBUG) Log.d(TAG, "checkCb matchUri = " + token.matchUri(url));
         if (token.matchUri(url)) { // 这边只检查是否是相同的url，不对是否还被管理进行判断
             if (null != target) {
                 cb.onSuccess(token, url, Uri.fromFile(target));
             } else {
-                cb.onFailed(token, url, new VideoStateCallback.VideoState(status.getCode(), status.getMessage()));
+                cb.onFailed(token, url, new VideoStateCallback.VideoStatus(status.getCode(), status.getMessage()));
             }
         }
     }

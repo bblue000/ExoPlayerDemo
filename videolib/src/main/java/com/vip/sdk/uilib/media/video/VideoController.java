@@ -37,75 +37,115 @@ import java.util.Map;
  *
  * @since 1.0
  */
-public abstract class VideoController {
+public abstract class VideoController implements VideoWidgetDelegate {
 
     static final String TAG = VIPVideoDebug.TAG; // VideoController.class.getSimpleName();
     static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
-
-    public class TargetPlayInfo {
-        public VIPVideoToken token;
-        public String url; // 指定播放时的URL
-        public boolean prepared; // playUri有没有设置过，如果设置过，之后的播放暂停等操作我们不再需要过多地涉及
-        public boolean manual; // 是否是用户手动触发的
-
-        /**
-         * 是否设置有当前播放项
-         */
-        public boolean isset() {
-            return null != token;
-        }
-
-        public boolean match(VIPVideoToken token, String uri) {
-            return isset() && this.token == token && ObjectUtils.equals(uri, this.url);
-        }
-
-        public boolean match(VIPVideoToken token) {
-            return isset() && this.token == token && token.matchUri(this.url);
-        }
-
-        public void resetIfMatch(VIPVideoToken token, Uri uri) {
-            if (isset() && this.token == token/* && !ObjectUtils.equals(String.valueOf(uri), this.url)*/) {
-                if (prepared) {
-                    stopPrevious(this.token);
-                }
-                reset();
-            }
-        }
-
-        public void reset() {
-            token = null;
-            url = null;
-            prepared = false;
-            manual = false;
-        }
-
-        public void set(VIPVideoToken token, boolean manual) {
-            reset();
-            if (null != token) {
-                this.token = token;
-                this.url = String.valueOf(this.token.uri); // 即时地保存url到临时字段
-                this.manual = manual;
-            }
-        }
-
-        @Override
-        public String toString() {
-            return "token = " + token + ", url = " + url;
-        }
-    }
 
     private LinkedHashMap<VIPVideo, VIPVideoToken> mVideoInfoMap = new LinkedHashMap<VIPVideo, VIPVideoToken>();
     private VideoCache mVideoCache;
     private AutoLoadable mAutoLoadable;
     protected TargetPlayInfo mPlaying = new TargetPlayInfo();
     private long mMinLoadingDelay = 1 * 1000;
+    // video operation API start
+    /**
+     * 自动确定播放哪一项，该方法不推荐在界面刚初始化时调用，
+     * 因为初始化时还不能确定视频控件在窗口中的位置。
+     *
+     * @see #findCurrentPlayVideo()
+     */
+    public void determinePlay() {
+        VIPVideo video = findCurrentPlayVideo();
+        VIPVideoToken token = null;
+        if (null != video) {
+            attachVideo(video);
+            token = video.getToken();
+        }
 
+        if (DEBUG) Log.d("yytest", "determine playing: " + mPlaying);
+        startTargetVideo(token, false);
+    }
+
+    /**
+     * 由子类实现，查找当前能够播放的项
+     */
+    protected abstract VIPVideo findCurrentPlayVideo();
+
+    @Override
+    public void setVideoPath(VIPVideo video, String path) {
+        setVideoURI(video, Uri.parse(path));
+    }
+
+    @Override
+    public void setVideoURI(VIPVideo video, Uri uri) {
+        setVideoURI(video, uri, null);
+    }
+
+    @Override
+    public void setVideoURI(VIPVideo video, Uri uri, Map<String, String> headers) {
+        attachVideo(video);
+        VIPVideoToken token = video.getToken();
+        // 重新设置时，检测是否是当前播放项，如果是，则重置其状态
+        mPlaying.resetIfMatch(token, uri);
+        if (null != token) {
+            token.setUri(uri, headers);
+            dispatchDownload(token, false);
+        }
+    }
+
+    @Override
+    public void start(VIPVideo video) {
+        attachVideo(video);
+        startTargetVideo(video.getToken(), true);
+    }
+
+    @Override
+    public boolean isPlaying(VIPVideo video) {
+        attachVideo(video);
+        return mPlaying.token == video.getToken() && video.isPlaying();
+    }
+
+    @Override
+    public void seekTo(VIPVideo video, int msec) {
+        attachVideo(video);
+        VIPVideoToken token = video.getToken();
+        token.seekTo = msec;
+        if (video.isInPlaybackState()) {
+
+        }
+        doVideoSeekTo(video.getToken(), msec);
+    }
+
+    @Override
+    public void pause(VIPVideo video) {
+        attachVideo(video);
+        doVideoPause(video.getToken());
+    }
+
+    @Override
+    public void stop(VIPVideo video) {
+        attachVideo(video);
+        doVideoStop(video.getToken());
+    }
+
+    @Override
+    public void setStateCallback(VIPVideo video, VideoStateCallback callback) {
+        attachVideo(video);
+        VIPVideoToken token = video.getToken();
+        token.stateCb = callback;
+        if (null != token.stateCb && token.video.isPlaying()) {
+            postDo(VideoStateCallback.STATE_START, token, null);
+        }
+    }
+    // video operation API end
+
+    // settings API start
     /**
      * 至少需要加载的时间，为了让已经缓存的视频仍然显得有加载过程。
      */
     public VideoController minLoadingDelay(long msec) {
         mMinLoadingDelay = msec;
-       return this;
+        return this;
     }
 
     /**
@@ -113,6 +153,14 @@ public abstract class VideoController {
      */
     public VideoController setAutoLoadStrategy(AutoLoadable strategy) {
         mAutoLoadable = strategy;
+        return this;
+    }
+
+    /**
+     * 设置缓存管理
+     */
+    public VideoController setCache(VideoCache cache) {
+        this.mVideoCache = cache;
         return this;
     }
 
@@ -129,14 +177,6 @@ public abstract class VideoController {
 
     protected AutoLoadable createDefaultAutoPlayStrategy() {
         return new NetDependStrategy();
-    }
-
-    /**
-     * 设置缓存管理
-     */
-    public VideoController setCache(VideoCache cache) {
-        this.mVideoCache = cache;
-        return this;
     }
 
     /**
@@ -175,108 +215,7 @@ public abstract class VideoController {
         super.finalize();
     }
 
-    // video operation API start
-    /**
-     * 自动确定播放哪一项，该方法不推荐在界面刚初始化时调用，
-     * 因为初始化时还不能确定视频控件在窗口中的位置。
-     *
-     * @see #findCurrentPlayVideo()
-     */
-    public void determinePlay() {
-        VIPVideo video = findCurrentPlayVideo();
-        VIPVideoToken token = null;
-        if (null != video) {
-            attachVideo(video);
-            token = video.getToken();
-        }
-
-        if (DEBUG) Log.d("yytest", "determine playing: " + mPlaying);
-        startTargetVideo(token, false);
-    }
-
-    /**
-     * 由子类实现，查找当前能够播放的项
-     */
-    protected abstract VIPVideo findCurrentPlayVideo();
-
-    /**
-     * 为指定Video设置播放源
-     *
-     * @see com.vip.sdk.uilib.media.video.VIPVideo#setVideoPath(String)
-     */
-    public void setPath(VIPVideo video, String path) {
-        setUri(video, Uri.parse(path));
-    }
-
-    /**
-     * 为指定Video设置播放源
-     *
-     * @see com.vip.sdk.uilib.media.video.VIPVideo#setVideoURI(android.net.Uri)
-     */
-    public void setUri(VIPVideo video, Uri uri) {
-        setUri(video, uri, null);
-    }
-
-    /**
-     * 为指定Video设置播放源
-     *
-     * @param headers 额外的请求头
-     *
-     * @see com.vip.sdk.uilib.media.video.VIPVideo#setVideoURICompat(android.net.Uri, java.util.Map)
-     */
-    public void setUri(VIPVideo video, Uri uri, Map<String, String> headers) {
-        attachVideo(video);
-        VIPVideoToken token = video.getToken();
-        // 重新设置时，检测是否是当前播放项，如果是，则重置其状态
-        mPlaying.resetIfMatch(token, uri);
-        if (null != token) {
-            token.headers = headers;
-            if (!token.matchUri(uri)) { // 如果URL不一样
-                token.uri = uri;
-                token.playUri = null;
-            }
-            dispatchDownload(token, false);
-        }
-    }
-
-    /**
-     * 让指定的视频控件开始播放
-     */
-    public void start(VIPVideo video) {
-        attachVideo(video);
-        startTargetVideo(video.getToken(), true);
-    }
-
-    /**
-     * 让指定的视频控件暂停播放
-     */
-    public void pause(VIPVideo video) {
-        attachVideo(video);
-        doVideoPause(video.getToken());
-    }
-
-    /**
-     * 让指定的视频控件停止播放
-     */
-    public void stop(VIPVideo video) {
-        attachVideo(video);
-        doVideoStop(video.getToken());
-    }
-
-    /**
-     * 给指定的视频控件设置状态回调接口
-     */
-    public void setStateCallback(VIPVideo video, VideoStateCallback callback) {
-        attachVideo(video);
-        VIPVideoToken token = video.getToken();
-        token.stateCb = callback;
-        if (null != token.stateCb && token.video.isPlaying()) {
-            postDo(VideoStateCallback.STATE_START, token, null);
-        }
-    }
-    // video operation API end
-
-
+    // inner implements start
     /**
      * 该方法只用于确定，如果不需要加载播放，则调用相应方法
      */
@@ -302,38 +241,34 @@ public abstract class VideoController {
         }
     }
 
-    private final int MSG_DELAY_PLAY = -1;
     /**
      * 在加载完成后调用，看是否能够播放当前项
      */
     protected void tryPlayCurrent() {
-        if (!mPlaying.isset()) { // 如果没有可播放项，则直接返回
-            return;
-        }
+        if (!mPlaying.isset()) return; // 如果没有可播放项，则直接返回
 
         final VIPVideoToken current = mPlaying.token;
-        if (null == current.playUri) { // 如果当前的播放Uri尚未加载完成，直接返回
-            return;
-        }
+        if (null == current.playUri) return;// 如果当前的播放Uri尚未加载完成，直接返回
+
         if (DEBUG) Log.e(TAG, current.video + " start uri : " + current.uri);
         if (DEBUG) Log.w(TAG, current.video + " start play uri: " + getPlayUriFileName(current.playUri));
 
-        if (DEBUG) Log.e(TAG, current.video + " start true uri : " + getPlayUriFileName(current.playUri));
         doSetVideoUri(current, current.playUri, current.headers);
-
+        if (current.seekTo != 0) {
+            doVideoSeekTo(current, current.seekTo);
+            current.seekTo = 0;
+        }
         mHandler.sendMessageDelayed(Message.obtain(mHandler, MSG_DELAY_PLAY, current), mMinLoadingDelay);
     }
 
     protected void playCurrentDelayed(VIPVideoToken current) {
-        if (!mPlaying.match(current)) { // 再次验证
-            return;
-        }
+        if (!mPlaying.match(current)) return; // 再次验证
 
         if (mPlaying.prepared && null != mPlaying.token.playUri) {
-            if (DEBUG) Log.d("yytest", current.video + " start...");
+            if (DEBUG) Log.d(TAG, current.video + " start...");
             doVideoStart(current);
         } else {
-            if (DEBUG) Log.d("yytest", current.video + " no play uri");
+            if (DEBUG) Log.d(TAG, current.video + " no play uri");
             // 这种情况不执行播放
         }
     }
@@ -350,13 +285,36 @@ public abstract class VideoController {
         token.video.setVideoURICompat(uri, headers);
     }
 
+    protected void doVideoStart(VIPVideoToken token) {
+        token.video.start();
+        postDo(VideoStateCallback.STATE_START, token, null);
+    }
+
+    protected void doVideoSeekTo(VIPVideoToken token, int msec) {
+        token.video.seekTo(msec);
+    }
+
+    protected void doVideoPause(VIPVideoToken token) {
+        boolean isPlaying = token.video.isPlaying();
+        token.video.pause(); // just do pause
+        if (isPlaying ^ token.video.isPlaying()) {
+            postDo(VideoStateCallback.STATE_PAUSE, token, null);
+        }
+    }
+
+    protected void doVideoStop(VIPVideoToken token) {
+        token.video.stop();
+        // 无论如何都发送一个停止的回调
+        postDo(VideoStateCallback.STATE_STOP, token, null);
+    }
+
     /**
      * {@link #doSetVideoUri(VIPVideoToken, Uri, Map)}操作中，发现相应的uri还没有加载到playUri时将调用该方法
      *
      * @param force 如果视频资源尚未加载成功，是否强制加载（即使{@link #getAutoPlayStrategy()#autoLoad(VIPVideo)}返回false）
      *
      * @return 返回true表明需要下载，后续将会通过{@link #onVideoDownloaded(VIPVideoToken, String, android.net.Uri)}
-     * 或者{@link #onVideoLoadFailed(VIPVideoToken, String, com.vip.sdk.uilib.media.video.VideoStateCallback.VideoState)}
+     * 或者{@link #onVideoLoadFailed(VIPVideoToken, String, VideoStateCallback.VideoStatus)}
      * 等相关方法返回结果。
      */
     protected boolean dispatchDownload(VIPVideoToken token, boolean force) {
@@ -388,25 +346,6 @@ public abstract class VideoController {
         }
     }
 
-    protected void doVideoStart(VIPVideoToken token) {
-        token.video.start();
-        postDo(VideoStateCallback.STATE_START, token, null);
-    }
-
-    protected void doVideoPause(VIPVideoToken token) {
-        boolean isPlaying = token.video.isPlaying();
-        token.video.pause(); // just do pause
-        if (isPlaying ^ token.video.isPlaying()) {
-            postDo(VideoStateCallback.STATE_PAUSE, token, null);
-        }
-    }
-
-    protected void doVideoStop(VIPVideoToken token) {
-        token.video.stop();
-        // 无论如何都发送一个停止的回调
-        postDo(VideoStateCallback.STATE_STOP, token, null);
-    }
-
     /**
      * 当设置了本地播放资源，视频控件反馈播放完成时调用
      */
@@ -419,7 +358,7 @@ public abstract class VideoController {
      *
      * @return 如果做了一定的处理，则返回true，否则返回false
      */
-    protected boolean onVideoPlayError(VIPVideoToken token, VideoStateCallback.VideoState state) {
+    protected boolean onVideoPlayError(VIPVideoToken token, VideoStateCallback.VideoStatus state) {
         if (DEBUG) Log.e(TAG, String.valueOf(state));
         postDo(VideoStateCallback.STATE_ERR, token, state);
         onVideoPlayCompleted(token);
@@ -475,7 +414,7 @@ public abstract class VideoController {
     /**
      * 视频缓存出错时调用
      */
-    protected void onVideoLoadFailed(VIPVideoToken token, String uri, VideoStateCallback.VideoState status) {
+    protected void onVideoLoadFailed(VIPVideoToken token, String uri, VideoStateCallback.VideoStatus status) {
         if (mPlaying.match(token, uri) && null == mPlaying.token.playUri) {
             // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
             if (DEBUG) Log.e(TAG, "onVideoLoadFailed");
@@ -498,7 +437,7 @@ public abstract class VideoController {
         }
 
         @Override
-        public void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoState status) {
+        public void onFailed(VIPVideoToken info, String uri, VideoStateCallback.VideoStatus status) {
             if (DEBUG) Log.d(TAG, uri.substring(uri.lastIndexOf("/") + 1) + "下载失败了");
             onVideoLoadFailed(info, uri, status);
         }
@@ -528,7 +467,7 @@ public abstract class VideoController {
         @Override
         public boolean onError(VIPVideo video, MediaPlayer mp, int what, int extra) {
             if (videoAttached(video)) {
-                return onVideoPlayError(video.getToken(), new VideoStateCallback.VideoState(what, "").extraCode(extra));
+                return onVideoPlayError(video.getToken(), new VideoStateCallback.VideoStatus(what, "").extraCode(extra));
             }
             return false;
         }
@@ -550,6 +489,10 @@ public abstract class VideoController {
         }
     }
 
+    protected void postState(int what, VIPVideoToken token, Object param) {
+
+    }
+
     private class MergeToken {
         public VIPVideoToken target;
         public Object param;
@@ -560,18 +503,24 @@ public abstract class VideoController {
         }
     }
 
+    private final int MSG_DELAY_PLAY = -1;
+    private final int MSG_STATE = 0;
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == MSG_DELAY_PLAY) {
-                playCurrentDelayed((VIPVideoToken) msg.obj);
-                return;
+            switch (msg.what) {
+                case MSG_STATE:
+
+                    break;
+                case MSG_DELAY_PLAY:
+                    playCurrentDelayed((VIPVideoToken) msg.obj);
+                    break;
             }
 
             if (msg.obj instanceof MergeToken) {
                 MergeToken token = (MergeToken) msg.obj;
                 if (null != token.target.stateCb) {
-                    token.target.stateCb.onStateChanged(token.target.video, msg.what, (VideoStateCallback.VideoState) token.param);
+                    token.target.stateCb.onStateChanged(token.target.video, msg.what, (VideoStateCallback.VideoStatus) token.param);
                 }
             } else {
                 VIPVideoToken token = (VIPVideoToken) msg.obj;
@@ -582,8 +531,64 @@ public abstract class VideoController {
         }
     };
 
+    /**
+     * 当前准备/正在播放的项
+     */
+    public class TargetPlayInfo {
+        public VIPVideoToken token;
+        public String url; // 指定播放时的URL
+        public boolean prepared; // playUri有没有设置过，如果设置过，之后的播放暂停等操作我们不再需要过多地涉及
+        public boolean manual; // 是否是用户手动触发的
 
+        /**
+         * 是否设置有当前播放项
+         */
+        public boolean isset() {
+            return null != token;
+        }
+
+        public boolean match(VIPVideoToken token, String uri) {
+            return isset() && this.token == token && ObjectUtils.equals(uri, this.url);
+        }
+
+        public boolean match(VIPVideoToken token) {
+            return isset() && this.token == token && token.matchUri(this.url);
+        }
+
+        public void resetIfMatch(VIPVideoToken token, Uri uri) {
+            if (isset() && this.token == token/* && !ObjectUtils.equals(String.valueOf(uri), this.url)*/) {
+                if (prepared) {
+                    stopPrevious(this.token);
+                }
+                reset();
+            }
+        }
+
+        public void reset() {
+            token = null;
+            url = null;
+            prepared = false;
+            manual = false;
+        }
+
+        public void set(VIPVideoToken token, boolean manual) {
+            reset();
+            if (null != token) {
+                this.token = token;
+                this.url = String.valueOf(this.token.uri); // 即时地保存url到临时字段
+                this.manual = manual;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "token = " + token + ", url = " + url;
+        }
+    }
+
+    // =============================================
     // util
+    // =============================================
     protected Rect mTempRect = new Rect();
     protected int[] mTempLoc = new int[2];
     /**
