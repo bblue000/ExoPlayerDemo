@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.widget.ListView;
 
-import com.vip.sdk.uilib.media.video.ListVideoController;
+import com.vip.sdk.uilib.media.video.VideoListController;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 
@@ -29,7 +29,7 @@ public class VideoListActivity extends Activity {
     @InjectView(R.id.list)
     ListView list;
 
-    private ListVideoController mController;
+    private VideoListController mController;
 
     private MediaListAdapter mAdapter;
 
@@ -45,7 +45,7 @@ public class VideoListActivity extends Activity {
     }
 
     public void initView() {
-        mController = new ListVideoController(list);
+        mController = new VideoListController(list);
 
         list.setOnScrollListener(mController);
 

@@ -16,20 +16,20 @@ public class VIPVideoDebug {
     /**
      * debug controller
      */
-    public static boolean CONTROLLER = true;
+    public static boolean CONTROLLER = false;
 
     /**
      * debug view
      */
-    public static boolean VIEW = true;
+    public static boolean VIEW = false;
 
     /**
      * debug controller
      */
-    public static boolean LIST_CONTROLLER = true;
+    public static boolean LIST_CONTROLLER = false;
 
     /**
-     * debug cahce
+     * debug cache
      */
     public static boolean CACHE = false;
 

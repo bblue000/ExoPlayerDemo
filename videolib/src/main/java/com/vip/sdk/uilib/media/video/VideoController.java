@@ -17,8 +17,8 @@ import com.vip.sdk.uilib.media.video.autoplay.NetDependStrategy;
 import com.vip.sdk.uilib.media.video.cache.SimpleVideoCache;
 import com.vip.sdk.uilib.media.video.cache.VideoCache;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  *
@@ -42,15 +42,11 @@ public abstract class VideoController implements VideoWidgetDelegate {
     static final String TAG = VIPVideoDebug.TAG; // VideoController.class.getSimpleName();
     static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
 
-    public interface VideoLoadProgressListener {
-        void onLoadProgress(VIPVideo video, String url, long current, long total);
-    }
-
-    private LinkedHashMap<VIPVideo, VIPVideoToken> mVideoInfoMap = new LinkedHashMap<VIPVideo, VIPVideoToken>();
+    private WeakHashMap<VIPVideo, Object> mVideoMap = new WeakHashMap<VIPVideo, Object>(4);
     private VideoCache mVideoCache;
     private AutoLoadable mAutoLoadable;
     protected TargetPlayInfo mPlaying = new TargetPlayInfo();
-    private long mMinLoadingDelay = 1 * 1000;
+    private long mLeastLoadingDelay = 1 * 1000;
     // video operation API start
     /**
      * 自动确定播放哪一项，该方法不推荐在界面刚初始化时调用，
@@ -66,8 +62,8 @@ public abstract class VideoController implements VideoWidgetDelegate {
             token = video.getToken();
         }
 
-        if (DEBUG) Log.d("yytest", "determine playing: " + mPlaying);
-        startTargetVideo(token, false);
+        if (DEBUG) Log.d(TAG, "determine playing: " + mPlaying);
+        updateCurrentPlayVideo(token, false);
     }
 
     /**
@@ -92,7 +88,9 @@ public abstract class VideoController implements VideoWidgetDelegate {
         // 重新设置时，检测是否是当前播放项，如果是，则重置其状态
         mPlaying.resetIfMatch(token, uri);
         if (null != token) {
-            token.setUri(uri, headers);
+            token.setVideoURI(uri, headers);
+            token.seekWhenPrepared = 0; // reset
+            token.currentState = VIPVideoToken.STATE_PREPARING;
             dispatchDownload(token, false);
         }
     }
@@ -100,7 +98,8 @@ public abstract class VideoController implements VideoWidgetDelegate {
     @Override
     public void start(VIPVideo video) {
         attachVideo(video);
-        startTargetVideo(video.getToken(), true);
+        VIPVideoToken token = video.getToken();
+        updateCurrentPlayVideo(token, true);
     }
 
     @Override
@@ -113,27 +112,36 @@ public abstract class VideoController implements VideoWidgetDelegate {
     public void seekTo(VIPVideo video, int msec) {
         attachVideo(video);
         VIPVideoToken token = video.getToken();
-        token.seekTo = msec;
-        if (video.isInPlaybackState()) {
-
+        if (token.isInPlaybackState()) {
+            token.seekWhenPrepared = 0;
+            doVideoSeekTo(video.getToken(), msec);
+        } else {
+            token.seekWhenPrepared = msec;
         }
-        doVideoSeekTo(video.getToken(), msec);
     }
 
     @Override
     public void pause(VIPVideo video) {
         attachVideo(video);
-        doVideoPause(video.getToken());
+        VIPVideoToken token = video.getToken();
+        if (token.isInPlaybackState()) {
+            token.currentState = VIPVideoToken.STATE_PAUSED;
+        }
+        token.targetState = VIPVideoToken.STATE_PAUSED;
+        doVideoPause(token);
     }
 
     @Override
     public void stop(VIPVideo video) {
         attachVideo(video);
+        VIPVideoToken token = video.getToken();
+        token.currentState = VIPVideoToken.STATE_IDLE;
+        token.targetState = VIPVideoToken.STATE_IDLE;
         doVideoStop(video.getToken());
     }
 
     @Override
-    public void setStateCallback(VIPVideo video, VideoControlCallback callback) {
+    public void setControlCallback(VIPVideo video, VideoControlCallback callback) {
         attachVideo(video);
         VIPVideoToken token = video.getToken();
         token.stateCb = callback;
@@ -147,8 +155,8 @@ public abstract class VideoController implements VideoWidgetDelegate {
     /**
      * 至少需要加载的时间，为了让已经缓存的视频仍然显得有加载过程。
      */
-    public VideoController minLoadingDelay(long msec) {
-        mMinLoadingDelay = msec;
+    public VideoController leastLoadingDelay(long msec) {
+        mLeastLoadingDelay = msec;
         return this;
     }
 
@@ -170,11 +178,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
     public AutoLoadable getAutoPlayStrategy() {
         if (null == mAutoLoadable) {
-            synchronized (this) {
-                if (null == mAutoLoadable) { // 使用默认的
-                    mAutoLoadable = createDefaultAutoPlayStrategy();
-                }
-            }
+            mAutoLoadable = createDefaultAutoPlayStrategy();
         }
         return mAutoLoadable;
     }
@@ -188,11 +192,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      */
     public VideoCache getCache() {
         if (null == mVideoCache) {
-            synchronized (this) {
-                if (null == mVideoCache) { // 使用默认的
-                    mVideoCache = createDefaultCache();
-                }
-            }
+            mVideoCache = createDefaultCache();
         }
         return mVideoCache;
     }
@@ -208,9 +208,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 销毁中间数据，一般是在界面关闭时调用
      */
     public void destroy() {
-        synchronized (mVideoInfoMap) {
-            mVideoInfoMap.clear();
-        }
+        mVideoMap.clear();
     }
 
     @Override
@@ -223,7 +221,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
     /**
      * 该方法只用于确定，如果不需要加载播放，则调用相应方法
      */
-    protected void startTargetVideo(VIPVideoToken token, boolean manual) {
+    protected void updateCurrentPlayVideo(VIPVideoToken token, boolean manual) {
         if (null == token || null == token.uri) {
             return;
         }
@@ -231,18 +229,26 @@ public abstract class VideoController implements VideoWidgetDelegate {
             // 如果已经设置了，且URL改变了，
             if (mPlaying.match(token)) { // 如果什么都没有改变
                 if (mPlaying.prepared) { // 已经处于准备好播放的状态
-                    doVideoStart(mPlaying.token);
+                    startTargetVideo(mPlaying.token);
                     return;
                 }
                 // 否则，也是走加载流程
             } else {
-                doVideoStop(mPlaying.token);
+                stopPrevious(mPlaying.token);
             }
         }
         mPlaying.set(token, manual);
         if (dispatchDownload(token, manual)) {
             postDo(VideoControlCallback.STATE_LOADING, token, null);
         }
+    }
+
+    protected void startTargetVideo(VIPVideoToken token) {
+        if (token.isInPlaybackState()) {
+            token.currentState = VIPVideoToken.STATE_PLAYING;
+        }
+        token.targetState = VIPVideoToken.STATE_PLAYING;
+        doVideoStart(token); // FIXME 是否在这里做，还是确定控件没有开始播放时才start
     }
 
     /**
@@ -258,11 +264,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         if (DEBUG) Log.w(TAG, current.video + " start play uri: " + getPlayUriFileName(current.playUri));
 
         doSetVideoUri(current, current.playUri, current.headers);
-        if (current.seekTo != 0) {
-            doVideoSeekTo(current, current.seekTo);
-            current.seekTo = 0;
-        }
-        mHandler.sendMessageDelayed(Message.obtain(mHandler, MSG_DELAY_PLAY, current), mMinLoadingDelay);
+        mHandler.sendMessageDelayed(Message.obtain(mHandler, MSG_DELAY_PLAY, current), mLeastLoadingDelay);
     }
 
     protected void playCurrentDelayed(VIPVideoToken current) {
@@ -270,7 +272,11 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
         if (mPlaying.prepared && null != mPlaying.token.playUri) {
             if (DEBUG) Log.d(TAG, current.video + " start...");
-            doVideoStart(current);
+            if (current.seekWhenPrepared != 0) {
+                doVideoSeekTo(current, current.seekWhenPrepared);
+                current.seekWhenPrepared = 0;
+            }
+            startTargetVideo(current);
         } else {
             if (DEBUG) Log.d(TAG, current.video + " no play uri");
             // 这种情况不执行播放
@@ -279,9 +285,10 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
     protected void stopPrevious(VIPVideoToken previous) {
         mHandler.removeMessages(MSG_DELAY_PLAY); // 不能忘记移除所有的播放message
-        doVideoStop(previous);
+        stop(previous.video);
     }
 
+    // 直接调用video的方法，并相应地处理各自的回调（如果有的话）
     /**
      * 此处根据设置的Uri和headers尝试下载
      */
@@ -311,6 +318,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         // 无论如何都发送一个停止的回调
         postDo(VideoControlCallback.STATE_STOP, token, null);
     }
+    // end
 
     /**
      * {@link #doSetVideoUri(VIPVideoToken, Uri, Map)}操作中，发现相应的uri还没有加载到playUri时将调用该方法
@@ -340,6 +348,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 当设置了本地播放资源，视频控件反馈可以播放时调用
      */
     protected void onVideoPrepared(VIPVideoToken token) {
+        token.currentState = VIPVideoToken.STATE_PREPARED;
         postDo(VideoControlCallback.STATE_PREPARED, token, null);
         // 看看是否是当前项加载好了
         if (mPlaying.match(token) && null != mPlaying.token.playUri) {
@@ -354,6 +363,8 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 当设置了本地播放资源，视频控件反馈播放完成时调用
      */
     protected void onVideoPlayCompleted(VIPVideoToken token) {
+        token.currentState = VIPVideoToken.STATE_PLAYBACK_COMPLETED;
+        token.targetState = VIPVideoToken.STATE_PLAYBACK_COMPLETED;
         postDo(VideoControlCallback.STATE_COMPLETION, token, null);
     }
 
@@ -364,6 +375,8 @@ public abstract class VideoController implements VideoWidgetDelegate {
      */
     protected boolean onVideoPlayError(VIPVideoToken token, VideoControlCallback.VideoStatus state) {
         if (DEBUG) Log.e(TAG, String.valueOf(state));
+        token.currentState = VIPVideoToken.STATE_ERROR;
+        token.targetState = VIPVideoToken.STATE_ERROR;
         postDo(VideoControlCallback.STATE_ERR, token, state);
         onVideoPlayCompleted(token);
         return true;
@@ -372,27 +385,22 @@ public abstract class VideoController implements VideoWidgetDelegate {
     // 设置必要的token信息
     protected void attachVideo(VIPVideo video) {
         if (!videoAttached(video)) {
-            synchronized (mVideoInfoMap) {
-                if (!videoAttached(video)) {
-                    // mVideoInfoMap.put(video, new VIPVideoToken(this, video));
-                    video.setToken(new VIPVideoToken(this, video));
-                    video.setInnerAPIOnPreparedListener(mOnPreparedListener);
-                    video.setInnerAPIOnCompletionListener(mOnCompletionListener);
-                    video.setInnerAPIOnErrorListener(mOnErrorListener);
-                }
-            }
+            // mVideoInfoMap.put(video, new VIPVideoToken(this, video));
+            video.setToken(new VIPVideoToken(this, video));
+            mVideoMap.put(video, this);
+            video.setInnerAPIOnPreparedListener(mOnPreparedListener);
+            video.setInnerAPIOnCompletionListener(mOnCompletionListener);
+            video.setInnerAPIOnErrorListener(mOnErrorListener);
         }
     }
 
     // 从管理器中删除制定的控件及其相应的token，不再对其进行管理
     protected void detachVideo(VIPVideo video) {
-        synchronized (mVideoInfoMap) {
-            mVideoInfoMap.remove(video);
-            video.setToken(null);
-            video.setInnerAPIOnPreparedListener(null);
-            video.setInnerAPIOnCompletionListener(null);
-            video.setInnerAPIOnErrorListener(null);
-        }
+        mVideoMap.remove(video);
+        video.setToken(null);
+        video.setInnerAPIOnPreparedListener(null);
+        video.setInnerAPIOnCompletionListener(null);
+        video.setInnerAPIOnErrorListener(null);
     }
 
     protected boolean videoAttached(VIPVideo video) {
@@ -539,7 +547,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 当前准备/正在播放的项
      */
     public class TargetPlayInfo {
-        public VIPVideoToken token;
+        public VIPVideoToken token; // 当前的视频项
         public String url; // 指定播放时的URL
         public boolean prepared; // playUri有没有设置过，如果设置过，之后的播放暂停等操作我们不再需要过多地涉及
         public boolean manual; // 是否是用户手动触发的

@@ -12,7 +12,7 @@ package com.vip.sdk.uilib.media.video;
  *
  * Created by Yin Yong on 15/12/27.
  *
- * @see VideoController#setStateCallback(VIPVideo, VideoControlCallback)
+ * @see VideoController#setControlCallback(VIPVideo, VideoControlCallback)
  */
 public interface VideoControlCallback {
 

@@ -15,7 +15,7 @@ import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.vip.sdk.base.utils.ToastUtils;
-import com.vip.sdk.uilib.media.video.ListVideoController;
+import com.vip.sdk.uilib.media.video.VideoListController;
 import com.vip.sdk.uilib.media.video.VIPVideo;
 import com.vip.sdk.uilib.media.video.VideoControlCallback;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
@@ -34,7 +34,7 @@ import butterknife.InjectView;
 *
 * @since 1.0
 */
-public class MediaListAdapter extends BaseAdapter implements ListVideoController.VideoListCallback {
+public class MediaListAdapter extends BaseAdapter implements VideoListController.VideoListCallback {
 
     public static final int VIEW_TYPE_IMAGE = 0;
     public static final int VIEW_TYPE_VIDEO = 1;
@@ -44,7 +44,7 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
     private LayoutInflater mInflater;
     private AQuery mAQuery;
     private List<MediaListInfo> mContent = new ArrayList<MediaListInfo>(20);
-    private ListVideoController mListVideoController;
+    private VideoListController mVideoListController;
 
     public MediaListAdapter(Context context) {
         mContext = context;
@@ -62,9 +62,9 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
         notifyDataSetInvalidated();
     }
 
-    public void setListVideoController(ListVideoController controller) {
-        mListVideoController = controller;
-        mListVideoController.videoListCallback(this);
+    public void setListVideoController(VideoListController controller) {
+        mVideoListController = controller;
+        mVideoListController.videoListCallback(this);
     }
 
     @Override
@@ -122,8 +122,8 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
             convertView.setTag(new ImageHolder(convertView));
         }
         final ImageHolder holder = (ImageHolder) convertView.getTag();
-        mAQuery.id(holder.imageIv).image(info.previewImage, true, true, 0, 0, null,
-                AQuery.FADE_IN, AQuery.RATIO_PRESERVE);
+//        mAQuery.id(holder.imageIv).image(info.previewImage, true, true, 0, 0, null,
+//                0, AQuery.RATIO_PRESERVE);
         return convertView;
     }
 
@@ -140,8 +140,8 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
         // 加载预览图片
         holder.overlayPreviewIv.setVisibility(View.VISIBLE);
         // mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true);
-        mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true, 0, 0, null,
-                AQuery.FADE_IN, AQuery.RATIO_PRESERVE);
+//        mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true, 0, 0, null,
+//                0, AQuery.RATIO_PRESERVE);
 
         holder.overlayPlayIv.setVisibility(View.VISIBLE);
         holder.overlayPauseIv.setVisibility(View.GONE);
@@ -149,16 +149,24 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
         holder.overlayLoadingPb.setVisibility(View.GONE);
         holder.overlayProgressPb.setVisibility(View.GONE);
 
-        mListVideoController.setVideoPath(holder.video, info.videoUrl);
+        mVideoListController.setVideoPath(holder.video, info.videoUrl);
 //        holder.video.setMediaController(new MediaController(mContext));
         // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
-        mListVideoController.setStateCallback(holder.video, new VideoControlCallback() {
+        mVideoListController.setControlCallback(holder.video, new VideoControlCallback() {
             private Animation mAnim;
+
             {
                 mAnim = new AlphaAnimation(1.0f, 0f);
                 mAnim.setDuration(500);
             }
+
             private CountDownTimer mTimer;
+
+            @Override
+            public void onLoadProgress(VIPVideo video, String url, long current, long total) {
+
+            }
+
             @Override
             public void onStateChanged(VIPVideo video, int state, VideoStatus status) {
                 switch (state) {
@@ -214,14 +222,14 @@ public class MediaListAdapter extends BaseAdapter implements ListVideoController
         holder.overlayPlayIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListVideoController.start(holder.video);
+                mVideoListController.start(holder.video);
             }
         });
 
         holder.overlayPauseIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListVideoController.pause(holder.video);
+                mVideoListController.pause(holder.video);
             }
         });
         return convertView;

@@ -54,8 +54,8 @@ public class Test extends Activity {
         SingleVideoController videoController = new SingleVideoController(vv);
         videoController.setVideoPath("http://" + MediaListManager.IP + "/public/vip1.mp4");
 
-//        videoController.seekTo(15000);
-//        videoController.start();
+        videoController.start();
+        videoController.seekTo(15000);
 
 //        final File file = new File(Environment.getExternalStorageDirectory(), "yytest");
 //        vv.setVideoURI(Uri.fromFile(file));

@@ -8,14 +8,16 @@ import android.widget.ListView;
 /**
  * Created by Yin Yong on 15/12/28.
  */
-public class ListVideoController extends VideoController implements AbsListView.OnScrollListener {
+public class VideoListController extends VideoController implements AbsListView.OnScrollListener {
+
+    static final boolean DEBUG = VIPVideoDebug.LIST_CONTROLLER;
 
     /**
-     * 封装针对ListView视图类型等方面的支持API，以便跟踪处理
+     * 封装ListView view type等相关的API，以便跟踪处理
      */
     public interface VideoListCallback {
         /**
-         * 如果不是含有视频的项，返回null；如果是还有视频的项，则返回{@link com.vip.sdk.uilib.media.video.VIPVideo}
+         * 如果不是含有视频的项，返回null；如果是含有视频的项，则返回{@link com.vip.sdk.uilib.media.video.VIPVideo}
          */
         VIPVideo getTinyVideo(int position, View convertView);
     }
@@ -26,36 +28,81 @@ public class ListVideoController extends VideoController implements AbsListView.
     protected boolean mIsTouchScrolling;
     protected boolean mTouchScrollingLoad = true; // 触屏滑动时是否加载视频，默认为true
     protected VideoListCallback mVideoListCallback;
-    public ListVideoController(ListView listView) {
+    public VideoListController(ListView listView) {
         mListView = listView;
     }
 
-    public ListVideoController videoListCallback(VideoListCallback callback) {
+    /**
+     * 设置回调
+     */
+    public VideoListController videoListCallback(VideoListCallback callback) {
         mVideoListCallback = callback;
         return this;
     }
 
     /**
-     * 快速滑动时是否预先加载视频
+     * 快速滑动时是否预先加载视频，默认为false
      */
-    public ListVideoController flingLoad(boolean flingLoad) {
+    public VideoListController flingLoad(boolean flingLoad) {
         mFlingLoad = flingLoad;
         return this;
     }
 
     /**
-     * 手势触屏滑动时是否预先加载视频
+     * 手势触屏滑动时是否预先加载视频，默认为true
      */
-    public ListVideoController touchScrollingLoad(boolean touchScrollingLoad) {
+    public VideoListController touchScrollingLoad(boolean touchScrollingLoad) {
         mTouchScrollingLoad = touchScrollingLoad;
         return this;
     }
 
+    public boolean isScrolling() {
+        return mIsFling || mIsTouchScrolling;
+    }
+
+    // 可以直接设置当前对象作为ListView的OnScrollListener，
+    // 也可以调用dispatchXXX方法转发外部的OnScrollListener
+    public void dispatchOnScrollStateChanged(AbsListView view, int scrollState) {
+        // if (DEBUG) Log.d("yytest", "dispatch scroll....");
+        checkCurrentPlayInViewport();
+        mIsFling = false;
+        mIsTouchScrolling = false;
+        switch (scrollState) {
+            case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
+                determinePlay();
+                break;
+            case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
+                // if (DEBUG) Log.d(TAG, "touch scrolling....");
+                mIsTouchScrolling = true;
+                break;
+            case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
+                // if (DEBUG) Log.d(TAG, "fling....");
+                mIsFling = true;
+                break;
+        }
+    }
+
+    public void dispatchOnScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+                                 int totalItemCount) {
+        // if (DEBUG) Log.d(TAG, "dispatch scroll....");
+        checkCurrentPlayInViewport();
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+        dispatchOnScrollStateChanged(view, scrollState);
+    }
+
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        dispatchOnScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+    }
+
     @Override
     protected VIPVideo findCurrentPlayVideo() {
-        if (!mListView.getGlobalVisibleRect(mTempRect)) { // 没有可显示的区域
-            return null;
-        }
+        if (null == mVideoListCallback) return null;
+        if (!mListView.getGlobalVisibleRect(mTempRect)) return null;// 没有可显示的区域
+
         final int top = mTempRect.top;
         final int middle = mTempRect.centerY();
         final int firstItemPos = mListView.getFirstVisiblePosition();
@@ -85,44 +132,6 @@ public class ListVideoController extends VideoController implements AbsListView.
             stopPrevious(mPlaying.token);
             mPlaying.reset();
         }
-    }
-
-    // 可以直接设置当前对象作为ListView的OnScrollListener，
-    // 也可以调用dispatchXXX方法转发外部的OnScrollListener
-    public void dispatchOnScrollStateChanged(AbsListView view, int scrollState) {
-        // if (DEBUG) Log.d("yytest", "dispatch scroll....");
-        checkCurrentPlayInViewport();
-        mIsFling = false;
-        mIsTouchScrolling = false;
-        switch (scrollState) {
-            case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
-                determinePlay();
-                break;
-            case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
-                // if (DEBUG) Log.d(TAG, "touch scrolling....");
-                mIsTouchScrolling = true;
-                break;
-            case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
-                // if (DEBUG) Log.d(TAG, "fling....");
-                mIsFling = true;
-                break;
-        }
-    }
-
-    public void dispatchOnScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-                         int totalItemCount) {
-        // if (DEBUG) Log.d(TAG, "dispatch scroll....");
-        checkCurrentPlayInViewport();
-    }
-
-    @Override
-    public void onScrollStateChanged(AbsListView view, int scrollState) {
-        dispatchOnScrollStateChanged(view, scrollState);
-    }
-
-    @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        dispatchOnScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
     }
 
     @Override
