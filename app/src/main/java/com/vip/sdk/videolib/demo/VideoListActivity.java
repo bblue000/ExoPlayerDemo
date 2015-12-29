@@ -53,6 +53,8 @@ public class VideoListActivity extends Activity {
         mAdapter.setListVideoController(mController);
 
         list.setAdapter(mAdapter);
+
+        mController.start(0, false);
     }
 
     public void request() {
@@ -60,7 +62,7 @@ public class VideoListActivity extends Activity {
             @Override
             public void onSuccess(MediaListInfo[] object) {
                 mAdapter.setData(object);
-                mController.determinePlay();
+                mController.start(0, false);
             }
         });
     }

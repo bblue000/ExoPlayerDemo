@@ -3,6 +3,7 @@ package com.vip.sdk.uilib.media.video;
 import android.util.Log;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 
 /**
@@ -33,6 +34,32 @@ public class VideoListController extends VideoController implements AbsListView.
     }
 
     /**
+     * 播放指定位置
+     */
+    public void start(int position, boolean forceScroll) {
+        start(position, 0, forceScroll);
+    }
+
+    /**
+     * 播放指定位置
+     */
+    public void start(int position, int msec, boolean forceScroll) {
+        ListAdapter adapter = mListView.getAdapter();
+        if (null == adapter || mListView.getChildCount() == 0) {
+            // do nothing
+            return;
+        }
+        final int firstItemPos = mListView.getFirstVisiblePosition();
+        final int lastItemPos = mListView.getLastVisiblePosition();
+//        if ((firstItemPos > position || lastItemPos) && !forceScroll) {
+//            return;
+//        }
+        mListView.setSelection(position);
+
+//        VIPVideo video = mVideoListCallback.getTinyVideo(position, child);
+    }
+
+    /**
      * 设置回调
      */
     public VideoListController videoListCallback(VideoListCallback callback) {
@@ -56,6 +83,9 @@ public class VideoListController extends VideoController implements AbsListView.
         return this;
     }
 
+    /**
+     * 判断{@link ListView}是否在滚动状态
+     */
     public boolean isScrolling() {
         return mIsFling || mIsTouchScrolling;
     }
@@ -84,7 +114,6 @@ public class VideoListController extends VideoController implements AbsListView.
 
     public void dispatchOnScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
                                  int totalItemCount) {
-        // if (DEBUG) Log.d(TAG, "dispatch scroll....");
         checkCurrentPlayInViewport();
     }
 
@@ -116,18 +145,17 @@ public class VideoListController extends VideoController implements AbsListView.
             if (childTop > middle) break;
 
             VIPVideo video = mVideoListCallback.getTinyVideo(firstItemPos + i, child);
-            if (null != video) {
-                if (DEBUG) Log.w(TAG, "当前播放的项：" + (firstItemPos + i + 1));
-                return video;
-            }
+
+            if (null != video) if (DEBUG) Log.w(TAG, "当前播放的项：" + (firstItemPos + i + 1));
+
+            return video;
         }
         return null;
     }
 
     protected void checkCurrentPlayInViewport() {
-        if (!mPlaying.isset()) {
-            return;
-        }
+        if (!mPlaying.isset()) return;
+
         if (!isInViewport(mPlaying.token.video, mListView)) {
             stopPrevious(mPlaying.token);
             mPlaying.reset();

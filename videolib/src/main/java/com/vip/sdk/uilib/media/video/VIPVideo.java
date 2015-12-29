@@ -39,31 +39,12 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     private static final String TAG = VIPVideoDebug.TAG;//VIPVideo.class.getSimpleName();
     private static final boolean DEBUG = VIPVideoDebug.VIEW;
 
-    // all possible internal states
-    private static final int STATE_ERROR              = -1;
-    private static final int STATE_IDLE               = 0;
-    private static final int STATE_PREPARING          = 1;
-    private static final int STATE_PREPARED           = 2;
-    private static final int STATE_PLAYING            = 3;
-    private static final int STATE_PAUSED             = 4;
-    private static final int STATE_PLAYBACK_COMPLETED = 5;
-
-    // mCurrentState is a VideoView object's current state.
-    // mTargetState is the state that a method caller intends to reach.
-    // For instance, regardless the VideoView object's current state,
-    // calling pause() intends to bring the object to a target state
-    // of STATE_PAUSED.
-    private int mCurrentState = STATE_IDLE;
-    private int mTargetState  = STATE_IDLE;
-
     private VideoView mVideoView;
     private LayoutParams mVideoViewLP;
     {
         mVideoViewLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         mVideoViewLP.addRule(CENTER_IN_PARENT);
     }
-
-    private int mSeekWhenPrepared;  // recording the seek position while preparing
 
     private float mSizeRatio = -1.0f;
 
@@ -291,11 +272,9 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     @Override
     public void setVideoURICompat(Uri uri, Map<String, String> headers) {
         // send message
-        mSeekWhenPrepared = 0;
         if (!isVideoAdded()) {
             addTinyVideo();
         }
-        mCurrentState = STATE_PREPARING;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mVideoView.setVideoURI(uri, headers);
         } else {
@@ -311,49 +290,33 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         return getChildCount() > 0 && null != mVideoView;
     }
 
-    /**
-     * 判断是否在可以播放的状态
-     */
-    /*package*/ boolean isInPlaybackState() {
-        return (isVideoAdded() &&
-                mCurrentState != STATE_ERROR &&
-                mCurrentState != STATE_IDLE &&
-                mCurrentState != STATE_PREPARING);
-    }
 
     @Override
     public boolean isPlaying() {
-        return isInPlaybackState() && mVideoView.isPlaying();
+        return isVideoAdded() && mVideoView.isPlaying();
     }
 
     @Override
     public void start() {
-        if (isInPlaybackState()) {
+        if (isVideoAdded()) {
             mVideoView.start();
-            mCurrentState = STATE_PLAYING;
         }
-        mTargetState = STATE_PLAYING;
     }
 
     @Override
     public void seekTo(int msec) {
-        if (isInPlaybackState()) {
+        if (isVideoAdded()) {
             mVideoView.seekTo(msec);
-            mSeekWhenPrepared = 0;
-        } else {
-            mSeekWhenPrepared = msec;
         }
     }
 
     @Override
     public void pause() {
-        if (isInPlaybackState()) {
+        if (isVideoAdded()) {
             if (mVideoView.isPlaying()) {
                 mVideoView.pause();
-                mCurrentState = STATE_PAUSED;
             }
         }
-        mTargetState = STATE_PAUSED;
     }
 
     @Override
@@ -361,24 +324,22 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         if (isVideoAdded()) {
             mVideoView.stopPlayback();
             removeVideoView();
-            mCurrentState = STATE_IDLE;
-            mTargetState = STATE_IDLE;
         }
     }
 
     @Override
     public int getDuration() {
-        return isInPlaybackState() ? Math.max(0, mVideoView.getDuration()) : 0;
+        return isVideoAdded() ? Math.max(0, mVideoView.getDuration()) : 0;
     }
 
     @Override
     public int getCurrentPosition() {
-        return isInPlaybackState() ? Math.max(0, mVideoView.getCurrentPosition()) : 0;
+        return isVideoAdded() ? Math.max(0, mVideoView.getCurrentPosition()) : 0;
     }
 
     @Override
     public int getBufferPercentage() {
-        return isInPlaybackState() ? Math.max(0, mVideoView.getBufferPercentage()) : 0;
+        return isVideoAdded() ? Math.max(0, mVideoView.getBufferPercentage()) : 0;
     }
 
     // ==================================================
@@ -408,8 +369,9 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
 
     @Override
     protected void onDetachedFromWindow() {
-        if (null != getToken()) {
-            getToken().controller.detachVideo(this);
+        final VIPVideoToken token = mToken;
+        if (null != token) {
+            token.controller.detachVideo(this);
         }
         super.onDetachedFromWindow();
     }
@@ -419,26 +381,11 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         public void onPrepared(MediaPlayer mp) {
             if (DEBUG) Log.d(TAG, this + " prepared");
 
-            mCurrentState = STATE_PREPARED;
-
             if (null != mInnerAPIOnPreparedListener) {
                 mInnerAPIOnPreparedListener.onPrepared(VIPVideo.this, mp);
             }
             if (null != mOnPreparedListener) {
                 mOnPreparedListener.onPrepared(VIPVideo.this, mp);
-            }
-
-            int seekToPosition = mSeekWhenPrepared;  // mSeekWhenPrepared may be changed after seekTo() call
-            if (seekToPosition != 0) {
-                seekTo(seekToPosition);
-            }
-            // We don't know the video size yet, but should start anyway.
-            // The video size might be reported to us later.
-            if (mTargetState == STATE_PLAYING) {
-                start();
-            } else if (!isPlaying() &&
-                    (seekToPosition != 0 || getCurrentPosition() > 0)) {
-                // do sth.
             }
         }
     };
@@ -446,8 +393,6 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     private MediaPlayer.OnCompletionListener mCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            mCurrentState = STATE_PLAYBACK_COMPLETED;
-            mTargetState = STATE_PLAYBACK_COMPLETED;
             if (null != mInnerAPIOnCompletionListener) {
                 mInnerAPIOnCompletionListener.onCompletion(VIPVideo.this, mp);
             }
@@ -462,8 +407,6 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         public boolean onError(MediaPlayer mp, int what, int extra) {
             /* If an error handler has been supplied, use it and finish. */
             if (DEBUG) Log.d(TAG, "Error: " + what + "," + extra);
-            mCurrentState = STATE_ERROR;
-            mTargetState = STATE_ERROR;
             boolean ret = false;
             if (null != mInnerAPIOnErrorListener) {
                 ret = mInnerAPIOnErrorListener.onError(VIPVideo.this, mp, what, extra);
@@ -484,13 +427,6 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
             if (DEBUG) Log.d(TAG, "surfaceChanged");
-            boolean isValidState =  (mTargetState == STATE_PLAYING);
-            if (isVideoAdded() && isValidState) {
-                if (mSeekWhenPrepared != 0) {
-                    seekTo(mSeekWhenPrepared);
-                }
-                start();
-            }
         }
 
         @Override

@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.vip.test.exoplayerdemo"
-        minSdkVersion 8
+        minSdkVersion 9
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
@@ -27,4 +27,5 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp:2.0.0'
     compile project(':videolib')
     compile 'com.jakewharton:butterknife:5.1.1'
+    compile 'com.facebook.fresco:fresco:0.8.0+'
 }

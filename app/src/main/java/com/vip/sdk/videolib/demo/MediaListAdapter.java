@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.androidquery.AQuery;
+import com.facebook.drawee.view.SimpleDraweeView;
 import com.vip.sdk.base.utils.ToastUtils;
 import com.vip.sdk.uilib.media.video.VideoListController;
 import com.vip.sdk.uilib.media.video.VIPVideo;
@@ -122,8 +123,7 @@ public class MediaListAdapter extends BaseAdapter implements VideoListController
             convertView.setTag(new ImageHolder(convertView));
         }
         final ImageHolder holder = (ImageHolder) convertView.getTag();
-//        mAQuery.id(holder.imageIv).image(info.previewImage, true, true, 0, 0, null,
-//                0, AQuery.RATIO_PRESERVE);
+        FrescoImageUtil.displayImgFromNetwork(holder.imageIv, info.previewImage);
         return convertView;
     }
 
@@ -140,8 +140,8 @@ public class MediaListAdapter extends BaseAdapter implements VideoListController
         // 加载预览图片
         holder.overlayPreviewIv.setVisibility(View.VISIBLE);
         // mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true);
-//        mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true, 0, 0, null,
-//                0, AQuery.RATIO_PRESERVE);
+        mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true, 0, 0, null,
+                AQuery.FADE_IN);
 
         holder.overlayPlayIv.setVisibility(View.VISIBLE);
         holder.overlayPauseIv.setVisibility(View.GONE);
@@ -252,7 +252,7 @@ public class MediaListAdapter extends BaseAdapter implements VideoListController
      */
     static class ImageHolder {
         @InjectView(R.id.image_iv)
-        ImageView imageIv;
+        SimpleDraweeView imageIv;
 
         ImageHolder(View view) {
             ButterKnife.inject(this, view);

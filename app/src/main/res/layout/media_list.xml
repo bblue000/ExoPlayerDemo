@@ -14,7 +14,7 @@
         android:id="@+id/list"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:dividerHeight="15dp"
+        android:dividerHeight="0dp"
         android:divider="@drawable/divider"
         android:listSelector="@drawable/selector"
         android:background="@android:color/white"
