@@ -1,24 +1,17 @@
 package com.vip.sdk.videolib.demo;
 
 import android.content.Context;
-import android.os.CountDownTimer;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.facebook.drawee.view.SimpleDraweeView;
-import com.vip.sdk.base.utils.ToastUtils;
 import com.vip.sdk.uilib.media.video.VideoListController;
 import com.vip.sdk.uilib.media.video.VIPVideo;
-import com.vip.sdk.uilib.media.video.VideoControlCallback;
+import com.vip.sdk.uilib.media.video.widget.VideoPanelView;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 
@@ -138,100 +131,7 @@ public class MediaListAdapter extends BaseAdapter implements VideoListController
         holder.name_tv.setText(info.title);
 
         // 加载预览图片
-        holder.overlayPreviewIv.setVisibility(View.VISIBLE);
-        // mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true);
-        mAQuery.id(holder.overlayPreviewIv).image(info.previewImage, true, true, 0, 0, null,
-                AQuery.FADE_IN);
-
-        holder.overlayPlayIv.setVisibility(View.VISIBLE);
-        holder.overlayPauseIv.setVisibility(View.GONE);
-
-        holder.overlayLoadingPb.setVisibility(View.GONE);
-        holder.overlayProgressPb.setVisibility(View.GONE);
-
-        mVideoListController.setVideoPath(holder.video, info.videoUrl);
-//        holder.video.setMediaController(new MediaController(mContext));
-        // Log.d("yytest", holder.video + "------ getView: " + info.videoUrl);
-        mVideoListController.setControlCallback(holder.video, new VideoControlCallback() {
-            private Animation mAnim;
-
-            {
-                mAnim = new AlphaAnimation(1.0f, 0f);
-                mAnim.setDuration(500);
-            }
-
-            private CountDownTimer mTimer;
-
-            @Override
-            public void onLoadProgress(VIPVideo video, String url, long current, long total) {
-
-            }
-
-            @Override
-            public void onStateChanged(VIPVideo video, int state, VideoStatus status) {
-                switch (state) {
-                    case STATE_LOADING:
-                        holder.overlayLoadingPb.setVisibility(View.VISIBLE);
-                        holder.overlayPlayIv.setVisibility(View.GONE);
-                        break;
-                    case STATE_START:
-                        holder.overlayLoadingPb.setVisibility(View.GONE);
-                        holder.overlayPlayIv.setVisibility(View.GONE);
-                        holder.overlayPreviewIv.startAnimation(mAnim);
-                        holder.overlayPreviewIv.setVisibility(View.GONE);
-                        holder.overlayPauseIv.setVisibility(View.VISIBLE);
-                        holder.overlayProgressPb.setVisibility(View.VISIBLE);
-                        holder.overlayProgressPb.setMax(100);
-                        if (null != mTimer) {
-                            mTimer.cancel();
-                        }
-                        mTimer = new CountDownTimer(holder.video.getDuration(), 1000) {
-                            @Override
-                            public void onTick(long millisUntilFinished) {
-                                holder.overlayProgressPb.setProgress((int)
-                                        (((float) holder.video.getCurrentPosition() / (float) holder.video.getDuration()) * 100));
-                            }
-
-                            @Override
-                            public void onFinish() {
-
-                            }
-                        };
-                        mTimer.start();
-                        break;
-                    case STATE_STOP:
-                        holder.overlayPreviewIv.setVisibility(View.VISIBLE);
-                        holder.overlayProgressPb.setVisibility(View.GONE);
-                        if (null != mTimer) {
-                            mTimer.cancel();
-                        }
-                    case STATE_PAUSE:
-                        holder.overlayLoadingPb.setVisibility(View.GONE);
-                        holder.overlayPauseIv.setVisibility(View.GONE);
-                        holder.overlayPlayIv.setVisibility(View.VISIBLE);
-                        break;
-                    case STATE_LOAD_ERR:
-                    case STATE_ERR:
-                        Log.e("yytest", "err {" + status.code + ", " + status.extraCode + "}");
-                        ToastUtils.showToast(status.message);
-                        break;
-                }
-            }
-        });
-
-        holder.overlayPlayIv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mVideoListController.start(holder.video);
-            }
-        });
-
-        holder.overlayPauseIv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mVideoListController.pause(holder.video);
-            }
-        });
+        holder.video.setData(mVideoListController, info.videoUrl, info.previewImage);
         return convertView;
     }
 
@@ -239,7 +139,7 @@ public class MediaListAdapter extends BaseAdapter implements VideoListController
     public VIPVideo getTinyVideo(int position, View convertView) {
         Object tag = convertView.getTag();
         if (tag instanceof VideoHolder) {
-            return ((VideoHolder) tag).video;
+            return ((VideoHolder) tag).video.getVideo();
         }
         return null;
     }
@@ -267,19 +167,9 @@ public class MediaListAdapter extends BaseAdapter implements VideoListController
      */
     static class VideoHolder {
         @InjectView(R.id.video)
-        VIPVideo video;
-        @InjectView(R.id.overlay_preview_iv)
-        ImageView overlayPreviewIv;
-        @InjectView(R.id.overlay_play_iv)
-        ImageView overlayPlayIv;
-        @InjectView(R.id.overlay_pause_iv)
-        ImageView overlayPauseIv;
+        VideoPanelView video;
         @InjectView(R.id.name_tv)
         TextView name_tv;
-        @InjectView(R.id.overlay_loading_pb)
-        ProgressBar overlayLoadingPb;
-        @InjectView(R.id.overlay_progress_pb)
-        ProgressBar overlayProgressPb;
 
         VideoHolder(View view) {
             ButterKnife.inject(this, view);

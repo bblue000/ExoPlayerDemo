@@ -1,5 +1,6 @@
 package com.vip.sdk.uilib.media.video;
 
+import android.app.Activity;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -64,6 +65,24 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
         if (DEBUG) Log.d(TAG, "determine playing: " + mPlaying);
         updateCurrentPlayVideo(token, false);
+    }
+
+    /**
+     * 如{@link Activity#onPause()}时，调用，将暂停播放
+     */
+    public void pauseControl() {
+        if (mPlaying.isset()) {
+            pause(mPlaying.token.video);
+        }
+    }
+
+    /**
+     * 由外部调用，如{@link Activity#onResume()}时，调用，将暂停播放
+     */
+    public void resumeControl() {
+        if (mPlaying.isset()) {
+
+        }
     }
 
     /**
@@ -146,7 +165,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         VIPVideoToken token = video.getToken();
         token.stateCb = callback;
         if (null != token.stateCb && token.video.isPlaying()) {
-            postDo(VideoControlCallback.STATE_START, token, null);
+            postState(VideoControlCallback.STATE_START, token, null);
         }
     }
     // video operation API end
@@ -222,9 +241,9 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 该方法只用于确定，如果不需要加载播放，则调用相应方法
      */
     protected void updateCurrentPlayVideo(VIPVideoToken token, boolean manual) {
-        if (null == token || null == token.uri) {
-            return;
-        }
+//        if (null == token || null == token.uri) {
+//            return;
+//        }
         if (mPlaying.isset()) { // 如果之前有播放项
             // 如果已经设置了，且URL改变了，
             if (mPlaying.match(token)) { // 如果什么都没有改变
@@ -239,7 +258,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         }
         mPlaying.set(token, manual);
         if (dispatchDownload(token, manual)) {
-            postDo(VideoControlCallback.STATE_LOADING, token, null);
+            postState(VideoControlCallback.STATE_LOADING, token, null);
         }
     }
 
@@ -298,7 +317,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
     protected void doVideoStart(VIPVideoToken token) {
         token.video.start();
-        postDo(VideoControlCallback.STATE_START, token, null);
+        postState(VideoControlCallback.STATE_START, token, null);
     }
 
     protected void doVideoSeekTo(VIPVideoToken token, int msec) {
@@ -309,14 +328,14 @@ public abstract class VideoController implements VideoWidgetDelegate {
         boolean isPlaying = token.video.isPlaying();
         token.video.pause(); // just do pause
         if (isPlaying ^ token.video.isPlaying()) {
-            postDo(VideoControlCallback.STATE_PAUSE, token, null);
+            postState(VideoControlCallback.STATE_PAUSE, token, null);
         }
     }
 
     protected void doVideoStop(VIPVideoToken token) {
         token.video.stop();
         // 无论如何都发送一个停止的回调
-        postDo(VideoControlCallback.STATE_STOP, token, null);
+        postState(VideoControlCallback.STATE_STOP, token, null);
     }
     // end
 
@@ -349,7 +368,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      */
     protected void onVideoPrepared(VIPVideoToken token) {
         token.currentState = VIPVideoToken.STATE_PREPARED;
-        postDo(VideoControlCallback.STATE_PREPARED, token, null);
+        postState(VideoControlCallback.STATE_PREPARED, token, null);
         // 看看是否是当前项加载好了
         if (mPlaying.match(token) && null != mPlaying.token.playUri) {
             mPlaying.prepared = true;
@@ -365,7 +384,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
     protected void onVideoPlayCompleted(VIPVideoToken token) {
         token.currentState = VIPVideoToken.STATE_PLAYBACK_COMPLETED;
         token.targetState = VIPVideoToken.STATE_PLAYBACK_COMPLETED;
-        postDo(VideoControlCallback.STATE_COMPLETION, token, null);
+        postState(VideoControlCallback.STATE_COMPLETION, token, null);
     }
 
     /**
@@ -377,7 +396,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         if (DEBUG) Log.e(TAG, String.valueOf(state));
         token.currentState = VIPVideoToken.STATE_ERROR;
         token.targetState = VIPVideoToken.STATE_ERROR;
-        postDo(VideoControlCallback.STATE_ERR, token, state);
+        postState(VideoControlCallback.STATE_ERR, token, state);
         onVideoPlayCompleted(token);
         return true;
     }
@@ -431,7 +450,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
             // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
             if (DEBUG) Log.e(TAG, "onVideoLoadFailed");
             // send message
-            postDo(VideoControlCallback.STATE_LOAD_ERR, token, status);
+            postState(VideoControlCallback.STATE_LOAD_ERR, token, status);
         }
     }
 
@@ -486,12 +505,12 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
     };
 
-    protected void postDo(int what, VIPVideoToken token, Object param) {
+    protected void postState(int what, VIPVideoToken token, VideoControlCallback.VideoStatus status) {
         Message msg;
-        if (null == param) {
-            msg = Message.obtain(mHandler, what, token);
+        if (null == status) {
+            msg = Message.obtain(mHandler, MSG_STATE, what, 0, token);
         } else {
-            msg = Message.obtain(mHandler, what, new MergeToken(token, param));
+            msg = Message.obtain(mHandler, MSG_STATE, what, 0, new MergeToken(token, status));
         }
         if (AndroidUtils.isMainThread()) {
             mHandler.handleMessage(msg);
@@ -501,15 +520,11 @@ public abstract class VideoController implements VideoWidgetDelegate {
         }
     }
 
-    protected void postState(int what, VIPVideoToken token, Object param) {
-
-    }
-
     private class MergeToken {
-        public VIPVideoToken target;
-        public Object param;
+        public final VIPVideoToken target;
+        public final VideoControlCallback.VideoStatus param;
 
-        private MergeToken(VIPVideoToken target, Object param) {
+        private MergeToken(VIPVideoToken target, VideoControlCallback.VideoStatus param) {
             this.target = target;
             this.param = param;
         }
@@ -522,23 +537,23 @@ public abstract class VideoController implements VideoWidgetDelegate {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_STATE:
-
+                    VIPVideoToken token;
+                    VideoControlCallback.VideoStatus status = null;
+                    if (msg.obj instanceof MergeToken) {
+                        MergeToken mergeToken = (MergeToken) msg.obj;
+                        token = mergeToken.target;
+                        status = mergeToken.param;
+                    } else {
+                        token = (VIPVideoToken) msg.obj;
+                    }
+                    final VideoControlCallback controlCallback = token.stateCb;
+                    if (null != controlCallback) {
+                        controlCallback.onStateChanged(token.video, msg.arg1, status);
+                    }
                     break;
                 case MSG_DELAY_PLAY:
                     playCurrentDelayed((VIPVideoToken) msg.obj);
                     break;
-            }
-
-            if (msg.obj instanceof MergeToken) {
-                MergeToken token = (MergeToken) msg.obj;
-                if (null != token.target.stateCb) {
-                    token.target.stateCb.onStateChanged(token.target.video, msg.what, (VideoControlCallback.VideoStatus) token.param);
-                }
-            } else {
-                VIPVideoToken token = (VIPVideoToken) msg.obj;
-                if (null != token.stateCb) {
-                    token.stateCb.onStateChanged(token.video, msg.what, null);
-                }
             }
         }
     };

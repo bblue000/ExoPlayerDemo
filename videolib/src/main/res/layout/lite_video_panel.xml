@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.vip.sdk.uilib.media.video.VIPVideo
+        android:id="@+id/lite_video"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
+
+    <FrameLayout
+        android:id="@+id/lite_cover_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <ImageView
+            android:id="@+id/lite_cover_iv"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:scaleType="centerCrop"/>
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="#4d000000"/>
+
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/lite_overlay_play_iv"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerInParent="true"
+        android:src="@drawable/ic_video_play"
+        />
+
+    <ProgressBar
+        android:id="@+id/lite_overlay_loading_pb"
+        style="@android:style/Widget.ProgressBar"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerInParent="true"
+        android:indeterminateDrawable="@drawable/lite_video_preparing"
+        android:visibility="gone"
+        />
+
+    <RelativeLayout
+        android:id="@+id/lite_control_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="48dp"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone">
+
+        <RelativeLayout
+            android:id="@+id/lite_media_seek_control_layout"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="@drawable/video_gradient_btm_bg">
+
+            <include
+                layout="@layout/lite_media_seek_control"/>
+
+        </RelativeLayout>
+
+        <ProgressBar
+            android:id="@+id/lite_tiny_progress_pb"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="2dp"
+            android:layout_alignParentBottom="true"
+            android:progressDrawable="@drawable/oc_video_tiny_progress"
+            android:maxHeight="3dp"
+            android:max="100"
+            android:visibility="gone"
+            />
+    </RelativeLayout>
+
+</RelativeLayout>

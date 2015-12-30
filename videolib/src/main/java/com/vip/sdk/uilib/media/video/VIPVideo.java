@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
-import com.vip.sdk.videolib.R;
+import com.vip.sdk.uilib.video.R;
 
 import java.util.Map;
 

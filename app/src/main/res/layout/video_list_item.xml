@@ -5,18 +5,12 @@
     android:layout_height="200dp"
     android:background="@android:color/black">
 
-    <com.vip.sdk.uilib.media.video.VIPVideo
+    <com.vip.sdk.uilib.media.video.widget.VideoPanelView
         android:id="@+id/video"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        />
+        android:layout_height="fill_parent">
 
-    <ImageView
-        android:id="@+id/overlay_preview_iv"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:scaleType="centerCrop"
-        />
+    </com.vip.sdk.uilib.media.video.widget.VideoPanelView>
 
     <RelativeLayout
         android:layout_width="fill_parent"
@@ -35,39 +29,5 @@
             android:textSize="16sp"/>
 
     </RelativeLayout>
-
-    <ImageView
-        android:id="@+id/overlay_play_iv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:src="@android:drawable/ic_media_play"
-        />
-
-    <ImageView
-        android:id="@+id/overlay_pause_iv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="10dp"
-        android:src="@android:drawable/ic_media_pause"
-        />
-
-    <ProgressBar
-        android:id="@+id/overlay_loading_pb"
-        style="@android:style/Widget.ProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        />
-
-    <ProgressBar
-        android:id="@+id/overlay_progress_pb"
-        style="@android:style/Widget.ProgressBar.Horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="2dp"
-        android:layout_alignParentBottom="true"
-        />
 
 </RelativeLayout>

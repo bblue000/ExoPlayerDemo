@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.vip.sdk.videolib">
+    package="com.vip.sdk.uilib.video">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
