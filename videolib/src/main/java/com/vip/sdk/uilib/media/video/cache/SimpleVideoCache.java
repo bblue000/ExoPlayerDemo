@@ -1,6 +1,8 @@
 package com.vip.sdk.uilib.media.video.cache;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.net.Uri;
 
 import com.vip.sdk.uilib.media.video.VIPVideoToken;
 
@@ -16,6 +18,21 @@ public class SimpleVideoCache implements VideoCache {
 
     @Override
     public void load(VIPVideoToken video, CacheCallback callback) {
+        Uri uri = video.uri;
+        if (null == uri) return;
+
+        final String url = String.valueOf(uri);
+        final String scheme = uri.getScheme();
+
+        // 过滤掉一些系统本就支持的项
+        if (ContentResolver.SCHEME_FILE.equals(scheme)
+                || ContentResolver.SCHEME_CONTENT.equals(scheme)
+                || ContentResolver.SCHEME_ANDROID_RESOURCE.equals(scheme)) {
+            callback.onCacheSuccess(video, url, uri);
+            return;
+        }
+
+        // do HTTP/HTTPS \, etc. cache
         VideoAjaxCallback.download(video, callback);
     }
 

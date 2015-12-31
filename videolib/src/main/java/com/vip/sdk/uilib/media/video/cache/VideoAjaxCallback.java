@@ -87,7 +87,8 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
      * 下载
      */
     public static void download(VIPVideoToken token, VideoCache.CacheCallback callback) {
-        String url = String.valueOf(token.uri);
+        final Uri uri = token.uri;
+        final String url = String.valueOf(uri);
 
         // 文件不存在，则需要下载
         synchronized (queueMap) {
@@ -418,12 +419,18 @@ public class VideoAjaxCallback extends AbstractAjaxCallback<File, VideoAjaxCallb
     protected static void checkCb(String url, VIPVideoToken token,
                                   File target, AjaxStatus status,
                                   VideoCache.CacheCallback cb) {
+        checkCb(url, token, null == target ? null : Uri.fromFile(target), status, cb);
+    }
+
+    protected static void checkCb(String url, VIPVideoToken token,
+                                  Uri target, AjaxStatus status,
+                                  VideoCache.CacheCallback cb) {
         if (null == token || null == cb) return;
 
         if (DEBUG) Log.d(TAG, "checkCb matchUri = " + token.matchUri(url));
         if (token.matchUri(url)) { // 这边只检查是否是相同的url，不对是否还被管理进行判断
             if (null != target) {
-                cb.onCacheSuccess(token, url, Uri.fromFile(target));
+                cb.onCacheSuccess(token, url, target);
             } else {
                 cb.onCacheFailed(token, url, new VideoControlCallback.VideoStatus(status.getCode(), status.getMessage()));
             }

@@ -1,6 +1,8 @@
 package com.vip.sdk.uilib.media.video.widget;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -55,7 +57,8 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
     protected ProgressBar mTinyProgressBar;
 
     protected boolean mInPlaybackState;
-    protected boolean mUserSeeking;
+    protected boolean mInPlaying;
+    protected boolean mUserSeeking; // 用户是否正在拖动
     private Animation mHideCoverAnim;
     {
         mHideCoverAnim = new AlphaAnimation(1.0f, 0f);
@@ -65,7 +68,7 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
         @Override
         public void run() {
             if (mUserSeeking) {
-                delayHideSeekControl();
+                //delayHideSeekControl();
             } else {
                 ViewUtils.setViewGone(mSeekControlLayout);
                 ViewUtils.setViewVisible(mTinyProgressBar);
@@ -93,7 +96,7 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
         return AQUtility.getHandler();
     }
 
-    private void initView(Context context) {
+    protected void initView(Context context) {
         LayoutInflater.from(context).inflate(R.layout.lite_video_panel, this);
         mVideo = (VIPVideo) findViewById(R.id.lite_video);
         // cover
@@ -124,6 +127,9 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
         mControlSeekBar.setOnSeekBarChangeListener(this);
     }
 
+    /**
+     * 将界面重置为初始状态（仅仅针对界面中显示/隐藏元素）
+     */
     public void showNormalState() {
         ViewUtils.setViewVisible(mVideo);
         ViewUtils.setViewVisible(mCoverLayout);
@@ -132,11 +138,14 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
         ViewUtils.setViewGone(mControlLayout);
     }
 
+    /**
+     * 设置初始数据
+     */
     public void setData(VideoController videoController, String videoPath, String coverPath) {
+        showNormalState();
         setVideoController(videoController);
         setVideoPath(videoPath);
-        setCoverPath(coverPath);
-        showNormalState();
+        setCoverImage(coverPath);
     }
 
     /**
@@ -166,13 +175,34 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
      * 设置封面图片
      * @param path 封面图片地址
      */
-    public void setCoverPath(String path) {
+    public void setCoverImage(String path) {
         if (null == mAQuery) {
             mAQuery = new AQuery(getContext());
         }
         mAQuery.id(mCoverIv).image(path, true, true);
     }
 
+    /**
+     * 设置封面图片
+     */
+    public void setCoverImage(Drawable drawable) {
+        mCoverIv.setImageDrawable(drawable);
+    }
+
+    /**
+     * 设置封面图片
+     */
+    public void setCoverImage(Bitmap bm) {
+        mCoverIv.setImageBitmap(bm);
+    }
+
+    public void setCoverImage(int res) {
+        mCoverIv.setImageResource(res);
+    }
+
+    /**
+     * 获得布局中的{@link VIPVideo}
+     */
     public VIPVideo getVideo() {
         return mVideo;
     }
@@ -181,19 +211,22 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
     protected Runnable mPlayTimeRun = new Runnable() {
         @Override
         public void run() {
-            onProgressChanged(mControlSeekBar, calculateProgress() , true);
-            getHandler().postDelayed(this, 1000L);
+            if (mInPlaybackState) { // 只有在可播放状态下才处理
+                onProgressChanged(mControlSeekBar, calculateProgressFromVideo() , true);
+                getHandler().postDelayed(this, 1000L);
+            }
         }
     };
 
     protected void startPlayTimer() {
-        onProgressChanged(mControlSeekBar, calculateProgress(), true);
+        cancelPlayTimer();
+        onProgressChanged(mControlSeekBar, calculateProgressFromVideo(), true);
         int len = mVideo.getDuration();
-        int millisec = len % 1000;
-        if (millisec < 100) {
-            millisec = 0;
+        int millisSec = len % 1000; // 减小一定的误差
+        if (millisSec < 100) {
+            millisSec = 0;
         }
-        getHandler().postDelayed(mPlayTimeRun, millisec);
+        getHandler().postDelayed(mPlayTimeRun, millisSec);
     }
 
     protected void cancelPlayTimer() {
@@ -201,29 +234,19 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
     }
 
     protected void updatePlayProgress(int position) {
-        updatePlayBarProgress(position);
-        updatePlayProgressText(position);
-    }
-
-    protected void updatePlayBarProgress(int position) {
-        if (mVideo.getDuration() <= 0) {
-            return;
+        final int duration = mVideo.getDuration();
+        if (duration > 0) {
+            int progress = (position * 100) / duration;
+            mControlSeekBar.setProgress(progress);
+            mTinyProgressBar.setProgress(progress);
         }
-        int progress = (position * 100) / mVideo.getDuration();
-        mControlSeekBar.setProgress(progress);
-        mTinyProgressBar.setProgress(progress);
+        mCurrentTimeTv.setText(formatTime(position) + "/");
+        mTotalTimeTv.setText(formatTime(duration));
     }
 
-    protected void updatePlayProgressText(int currentPos) {
-        mCurrentTimeTv.setText(formatTime(currentPos) + "/");
-        mTotalTimeTv.setText(formatTime(mVideo.getDuration()));
-    }
-
-    protected int calculateProgress() {
+    protected int calculateProgressFromVideo() {
         int total = mVideo.getDuration();
-        if (total <= 0) {
-            return 0;
-        }
+        if (total <= 0) return 0;
         int cur = mVideo.getCurrentPosition();
         return (cur * 100) / total;
     }
@@ -281,18 +304,15 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
         if (null != mVideoController) {
             if (mVideo.isPlaying()) {
                 mVideoController.pause(mVideo);
-                cancelPlayTimer(); // 不再计时，稍微优化
             } else {
                 mVideoController.start(mVideo);
-                startPlayTimer();
             }
-            updateVideoControl();
-            refreshHideSeekControl();
+            delayHideSeekControl();
         }
     }
 
     protected void onFullScreenClicked() {
-
+        FullScreenVideoActivity.startMe(getContext(), null);
     }
 
     @Override
@@ -325,27 +345,44 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
             onExitPlaybackState();
             mInPlaybackState = false;
         }
-        ViewUtils.setViewVisible(mOverlayLoadingV);
         ViewUtils.setViewGone(mOverlayPlayV);
+        ViewUtils.setViewVisible(mOverlayLoadingV);
     }
 
     protected void onStateStart(VIPVideo video) {
         if (!mInPlaybackState) {
-            onEnterPlaybackState();
+            onEnterPlaybackState(); // 已经改变了界面的状态
             mInPlaybackState = true;
         }
         updateVideoControl();
+        if (!mInPlaying) {
+            startPlayTimer();
+            mInPlaying = true;
+        }
     }
 
     protected void onStatePause(VIPVideo video) {
         ViewUtils.setViewGone(mOverlayPlayV);
         ViewUtils.setViewGone(mOverlayLoadingV);
         updateVideoControl();
+        if (mInPlaying) {
+            cancelPlayTimer();
+            mInPlaying = false;
+        }
     }
 
     protected void onStateStop(VIPVideo video) {
-        onExitPlaybackState();
-        mInPlaybackState = false;
+        if (mInPlaybackState) {
+            onExitPlaybackState();
+            mInPlaybackState = false;
+        }
+        updateVideoControl();
+        if (mInPlaying) {
+            cancelPlayTimer();
+            mInPlaying = false;
+        }
+        ViewUtils.setViewVisible(mOverlayPlayV);
+        ViewUtils.setViewGone(mOverlayLoadingV);
     }
 
     protected void onStateLoadErr(VIPVideo video, VideoStatus status) {
@@ -357,12 +394,8 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
         ToastUtils.showToast(status.message);
     }
 
-    protected void refreshHideSeekControl() {
-        cancelHideSeekControl();
-        delayHideSeekControl();
-    }
-
     protected void delayHideSeekControl() {
+        cancelHideSeekControl();
         getHandler().postDelayed(mHideSeekControlRun, 3000L);
     }
 
@@ -384,7 +417,6 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
         ViewUtils.setViewVisible(mSeekControlLayout);
         ViewUtils.setViewGone(mTinyProgressBar);
         delayHideSeekControl();
-        startPlayTimer();
     }
 
     /**
@@ -392,13 +424,11 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
      */
     protected void onExitPlaybackState() {
         cancelHideSeekControl();
-        cancelPlayTimer();
-        updateVideoControl();
         showNormalState();
     }
 
     /**
-     * 根据当前播放状态，显示播放暂停
+     * 根据当前播放状态，显示播放/暂停按钮图标
      */
     protected void updateVideoControl() {
         if (mVideo.isPlaying()) {
@@ -436,7 +466,7 @@ public class VideoPanelView extends RelativeLayout implements View.OnClickListen
                 mVideoController.seekTo(mVideo, position);
                 mVideoController.start(mVideo); // 如果原先不在播放的话
             }
-            refreshHideSeekControl();
+            delayHideSeekControl(); // 重新开始延迟隐藏
         }
     }
 }

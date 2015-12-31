@@ -93,7 +93,6 @@ public class VideoListController extends VideoController implements AbsListView.
     // 可以直接设置当前对象作为ListView的OnScrollListener，
     // 也可以调用dispatchXXX方法转发外部的OnScrollListener
     public void dispatchOnScrollStateChanged(AbsListView view, int scrollState) {
-        // if (DEBUG) Log.d("yytest", "dispatch scroll....");
         checkCurrentPlayInViewport();
         mIsFling = false;
         mIsTouchScrolling = false;
@@ -102,11 +101,9 @@ public class VideoListController extends VideoController implements AbsListView.
                 determinePlay();
                 break;
             case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
-                // if (DEBUG) Log.d(TAG, "touch scrolling....");
                 mIsTouchScrolling = true;
                 break;
             case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
-                // if (DEBUG) Log.d(TAG, "fling....");
                 mIsFling = true;
                 break;
         }
@@ -165,11 +162,9 @@ public class VideoListController extends VideoController implements AbsListView.
     @Override
     protected boolean dispatchDownload(VIPVideoToken token, boolean force) {
         if (!mTouchScrollingLoad && mIsTouchScrolling) { // 如果触屏滑动，则不下载
-            // if (DEBUG) Log.d(TAG", "touch scrolling....不下载");
             return false;
         }
         if (!mFlingLoad && mIsFling) { // 如果快速滑动，则不下载
-            // if (DEBUG) Log.d(TAG, "fling....不下载");
             return false;
         }
         return super.dispatchDownload(token, force);

@@ -68,6 +68,22 @@ public class VideoListActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (null != mController) {
+            mController.resumeControl();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (null != mController) {
+            mController.pauseControl();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (null != mController) {

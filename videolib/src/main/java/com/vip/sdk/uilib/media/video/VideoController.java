@@ -46,7 +46,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
     private WeakHashMap<VIPVideo, Object> mVideoMap = new WeakHashMap<VIPVideo, Object>(4);
     private VideoCache mVideoCache;
     private AutoLoadable mAutoLoadable;
-    protected TargetPlayInfo mPlaying = new TargetPlayInfo();
+    protected final TargetPlayInfo mPlaying = new TargetPlayInfo();
     private long mLeastLoadingDelay = 1 * 1000;
     // video operation API start
     /**
@@ -68,21 +68,17 @@ public abstract class VideoController implements VideoWidgetDelegate {
     }
 
     /**
-     * 如{@link Activity#onPause()}时，调用，将暂停播放
+     * 如{@link Activity#onPause()}时，调用该方法，将保存当前播放的状态并暂停
      */
     public void pauseControl() {
-        if (mPlaying.isset()) {
-            pause(mPlaying.token.video);
-        }
+        mPlaying.saveState();
     }
 
     /**
-     * 由外部调用，如{@link Activity#onResume()}时，调用，将暂停播放
+     * 由外部调用，如{@link Activity#onResume()}时，调用该方法，将相应地重置状态
      */
     public void resumeControl() {
-        if (mPlaying.isset()) {
-
-        }
+        mPlaying.restoreState();
     }
 
     /**
@@ -241,9 +237,6 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * 该方法只用于确定，如果不需要加载播放，则调用相应方法
      */
     protected void updateCurrentPlayVideo(VIPVideoToken token, boolean manual) {
-//        if (null == token || null == token.uri) {
-//            return;
-//        }
         if (mPlaying.isset()) { // 如果之前有播放项
             // 如果已经设置了，且URL改变了，
             if (mPlaying.match(token)) { // 如果什么都没有改变
@@ -374,7 +367,19 @@ public abstract class VideoController implements VideoWidgetDelegate {
             mPlaying.prepared = true;
             // try play current
             mHandler.removeMessages(MSG_DELAY_PLAY);
-            playCurrentDelayed(token);
+            // 特别处理一下预设，如果目标的状态是暂停或者停止，特别处理一下
+            if (token.targetState > VIPVideoToken.STATE_PLAYING ) {
+//                switch (token.targetState) {
+//                    case VIPVideoToken.STATE_PAUSED:
+//                        pause(token.video);
+//                        break;
+//                    case VIPVideoToken.STATE_PLAYBACK_COMPLETED:
+//                        stop(token.video);
+//                        break;
+//                }
+            } else {
+                playCurrentDelayed(token);
+            }
         }
     }
 
@@ -596,6 +601,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
             url = null;
             prepared = false;
             manual = false;
+            isPlayingWhenPauseControl = false;
         }
 
         public void set(VIPVideoToken token, boolean manual) {
@@ -606,6 +612,36 @@ public abstract class VideoController implements VideoWidgetDelegate {
                 this.manual = manual;
             }
         }
+
+        // 保存/恢复状态 start
+        private boolean isPlayingWhenPauseControl;
+        private int posWhenPauseControl;
+        public void saveState() {
+            if (isset()) {
+                isPlayingWhenPauseControl = token.video.isPlaying();
+                posWhenPauseControl = token.video.getCurrentPosition();
+            }
+        }
+
+        public void restoreState() {
+            if (isset()) {
+                if (posWhenPauseControl != 0) {
+                    seekTo(token.video, posWhenPauseControl);
+                    if (isPlayingWhenPauseControl) {
+                        start(token.video);
+                    } else {
+                        pause(token.video);
+                    }
+                } else {
+                    if (isPlayingWhenPauseControl) {
+                        start(token.video);
+                    }
+                }
+            }
+            isPlayingWhenPauseControl = false;
+            posWhenPauseControl = 0;
+        }
+        // end
 
         @Override
         public String toString() {

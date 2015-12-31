@@ -59,11 +59,11 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
 
     public VIPVideo(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initTinyVideoContainer(context, attrs, defStyleAttr);
+        initVideoContainer(context, attrs, defStyleAttr);
     }
 
     // 处理一些初始化的属性
-    private void initTinyVideoContainer(Context context, AttributeSet attrs, int defStyleAttr) {
+    private void initVideoContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.VIPVideo, defStyleAttr, 0);
         mSizeRatio = a.getFloat(R.styleable.VIPVideo_sizeRatio, -1.0f);
         a.recycle();
@@ -313,9 +313,7 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     @Override
     public void pause() {
         if (isVideoAdded()) {
-            if (mVideoView.isPlaying()) {
-                mVideoView.pause();
-            }
+            mVideoView.pause();
         }
     }
 
