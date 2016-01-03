@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.facebook.drawee.view.SimpleDraweeView;
-import com.vip.sdk.uilib.media.video.VideoListController;
+import com.vip.sdk.uilib.media.video.controller.VideoListController;
 import com.vip.sdk.uilib.media.video.VIPVideo;
 import com.vip.sdk.uilib.media.video.widget.VideoPanelView;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
@@ -136,7 +136,7 @@ public class MediaListAdapter extends BaseAdapter implements VideoListController
     }
 
     @Override
-    public VIPVideo getTinyVideo(int position, View convertView) {
+    public VIPVideo getVIPVideo(int position, View convertView) {
         Object tag = convertView.getTag();
         if (tag instanceof VideoHolder) {
             return ((VideoHolder) tag).video.getVideo();

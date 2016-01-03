@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video;
+package com.vip.sdk.uilib.media.video.controller;
 
 import android.util.Log;
 import android.view.View;
@@ -6,12 +6,17 @@ import android.widget.AbsListView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import com.vip.sdk.uilib.media.video.VIPVideo;
+import com.vip.sdk.uilib.media.video.VIPVideoDebug;
+import com.vip.sdk.uilib.media.video.VIPVideoToken;
+import com.vip.sdk.uilib.media.video.VideoController;
+
 /**
  * Created by Yin Yong on 15/12/28.
  */
 public class VideoListController extends VideoController implements AbsListView.OnScrollListener {
 
-    static final boolean DEBUG = VIPVideoDebug.LIST_CONTROLLER;
+    protected static final boolean DEBUG = VIPVideoDebug.LIST_CONTROLLER;
 
     /**
      * 封装ListView view type等相关的API，以便跟踪处理
@@ -20,7 +25,7 @@ public class VideoListController extends VideoController implements AbsListView.
         /**
          * 如果不是含有视频的项，返回null；如果是含有视频的项，则返回{@link com.vip.sdk.uilib.media.video.VIPVideo}
          */
-        VIPVideo getTinyVideo(int position, View convertView);
+        VIPVideo getVIPVideo(int position, View convertView);
     }
 
     private ListView mListView;
@@ -56,7 +61,7 @@ public class VideoListController extends VideoController implements AbsListView.
 //        }
         mListView.setSelection(position);
 
-//        VIPVideo video = mVideoListCallback.getTinyVideo(position, child);
+//        VIPVideo video = mVideoListCallback.getVIPVideo(position, child);
     }
 
     /**
@@ -141,7 +146,7 @@ public class VideoListController extends VideoController implements AbsListView.
             if (childTop < top) continue;
             if (childTop > middle) break;
 
-            VIPVideo video = mVideoListCallback.getTinyVideo(firstItemPos + i, child);
+            VIPVideo video = mVideoListCallback.getVIPVideo(firstItemPos + i, child);
 
             if (null != video) if (DEBUG) Log.w(TAG, "当前播放的项：" + (firstItemPos + i + 1));
 

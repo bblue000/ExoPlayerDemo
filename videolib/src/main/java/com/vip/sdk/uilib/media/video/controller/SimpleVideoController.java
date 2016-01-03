@@ -1,4 +1,7 @@
-package com.vip.sdk.uilib.media.video;
+package com.vip.sdk.uilib.media.video.controller;
+
+import com.vip.sdk.uilib.media.video.VIPVideo;
+import com.vip.sdk.uilib.media.video.VideoController;
 
 /**
  * 简单的实现类，可以用来支持缓存功能，没有其他复杂的控制逻辑

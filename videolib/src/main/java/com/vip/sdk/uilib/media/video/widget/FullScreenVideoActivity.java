@@ -11,7 +11,7 @@ import android.os.Handler;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.vip.sdk.uilib.media.video.SingleVideoController;
+import com.vip.sdk.uilib.media.video.controller.SingleVideoController;
 import com.vip.sdk.uilib.video.R;
 
 /**

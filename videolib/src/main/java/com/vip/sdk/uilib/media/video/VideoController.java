@@ -29,6 +29,14 @@ import java.util.WeakHashMap;
  *
  * <p/>
  *
+ * 视频播放的控件（{@link VIPVideo}）本身是可以独立使用的，使用控制器，
+ * 能够从界面流/布局的角度来控制视频控件的播放顺序、播放-停止状态的切换等。
+ *
+ * <p/>
+ *
+ * 如果需要在当前界面进入后台时保存状态，可以调用{@link #pauseControl()}；
+ * 在重新进入前台时恢复状态，可以调用{@link #resumeControl()}。
+ *
  * 主要过程：
  * set uri---try download---(download success)--set uri to video---(when prepared)---try start
  * --->play video
@@ -40,8 +48,8 @@ import java.util.WeakHashMap;
  */
 public abstract class VideoController implements VideoWidgetDelegate {
 
-    static final String TAG = VIPVideoDebug.TAG; // VideoController.class.getSimpleName();
-    static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
+    protected static final String TAG = VIPVideoDebug.TAG; // VideoController.class.getSimpleName();
+    protected static final boolean DEBUG = VIPVideoDebug.CONTROLLER;
 
     private WeakHashMap<VIPVideo, Object> mVideoMap = new WeakHashMap<VIPVideo, Object>(4);
     private VideoCache mVideoCache;
@@ -393,7 +401,9 @@ public abstract class VideoController implements VideoWidgetDelegate {
     }
 
     /**
-     * 当设置了本地播放资源，视频控件反馈播放错误时调用
+     * 当设置了本地播放资源，视频控件反馈播放错误时调用。
+     *
+     * 出现错误也应当告诉外界视频播放结束了（即后续会立即触发进入{@link VideoControlCallback#STATE_COMPLETION}）
      *
      * @return 如果做了一定的处理，则返回true，否则返回false
      */
@@ -402,7 +412,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
         token.currentState = VIPVideoToken.STATE_ERROR;
         token.targetState = VIPVideoToken.STATE_ERROR;
         postState(VideoControlCallback.STATE_ERR, token, state);
-        onVideoPlayCompleted(token);
+        postState(VideoControlCallback.STATE_COMPLETION, token, state);
         return true;
     }
 
