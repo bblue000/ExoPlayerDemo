@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- seek control colors -->
+    <color name="vc_current_time_textcolor">#ffeeeef1</color>
+    <color name="vc_total_time_textcolor">#ff86878b</color>
+
+    <dimen name="vc_controlbar_height">45dp</dimen>
+    <dimen name="vc_time_label_textsize">11sp</dimen>
+    <dimen name="vc_tool_icon_size">45dp</dimen>
+
+    <!-- 视频控制布局的样式 start -->
+    <style name="VideoControl"></style>
+
+    <style name="VideoControl.PlayPauseControl">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:layout_alignParentLeft">true</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:src">@drawable/vc_video_play</item>
+    </style>
+
+    <style name="VideoControl.SeekBar">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:paddingLeft">7dp</item>
+        <item name="android:paddingRight">7dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:splitTrack">false</item>
+        <item name="android:thumb">@drawable/vc_slider_thumb</item>
+        <item name="android:progressDrawable">@drawable/vc_slider_track</item>
+        <item name="android:thumbOffset">7dp</item>
+        <item name="android:maxHeight">1dp</item>
+        <item name="android:max">100</item>
+    </style>
+
+    <style name="VideoControl.CurrentTime">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/vc_current_time_textcolor</item>
+        <item name="android:textSize">@dimen/vc_time_label_textsize</item>
+    </style>
+
+    <style name="VideoControl.TotalTime">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/vc_total_time_textcolor</item>
+        <item name="android:textSize">@dimen/vc_time_label_textsize</item>
+    </style>
+
+    <style name="VideoControl.ToolIcon">
+        <item name="android:layout_width">@dimen/vc_tool_icon_size</item>
+        <item name="android:layout_height">@dimen/vc_tool_icon_size</item>
+    </style>
+    <!-- 视频控制布局的样式 end -->
+
+    <!-- full screen activity theme -->
+    <style name="FullScreenVideoTheme" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+        <item name="android:screenOrientation">sensorLandscape</item>
+        <item name="android:configChanges">orientation</item>
+    </style>
+
+</resources>

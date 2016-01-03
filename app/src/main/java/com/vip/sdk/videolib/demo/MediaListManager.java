@@ -21,7 +21,7 @@ public class MediaListManager {
         void onSuccess(MediaListInfo[] object) ;
     }
 
-    public static final String IP = "10.101.54.106";
+    public static final String IP = "192.168.1.112";
 
     // 10.101.54.106 // 192.168.1.105
 //    $data = array();

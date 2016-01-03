@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="@dimen/vc_controlbar_height">
+
+    <ImageView
+        android:id="@+id/vc_play_pause_iv"
+        style="@style/VideoControl.PlayPauseControl"/>
+
+    <SeekBar
+        android:id="@+id/vc_slider"
+        style="@style/VideoControl.SeekBar"
+        android:layout_toRightOf="@id/vc_current_time_tv"
+        android:layout_toLeftOf="@+id/vc_total_time_tv"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        />
+
+    <TextView
+        android:id="@+id/vc_current_time_tv"
+        style="@style/VideoControl.CurrentTime"
+        android:layout_toRightOf="@+id/vc_play_pause_iv"
+        android:layout_centerVertical="true"
+        android:text="00:00" />
+
+    <TextView
+        android:id="@+id/vc_total_time_tv"
+        style="@style/VideoControl.TotalTime"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:text="00:00"/>
+
+</RelativeLayout>

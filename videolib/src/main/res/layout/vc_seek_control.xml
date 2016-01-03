@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="@dimen/vc_controlbar_height">
+
+    <ImageView
+        android:id="@+id/vc_play_pause_iv"
+        style="@style/VideoControl.PlayPauseControl"/>
+
+    <SeekBar
+        android:id="@+id/vc_slider"
+        style="@style/VideoControl.SeekBar"
+        android:layout_toRightOf="@id/vc_play_pause_iv"
+        android:layout_toLeftOf="@+id/vc_tool_fullscreen_v"
+        />
+
+    <ImageView
+        android:id="@+id/vc_tool_fullscreen_v"
+        style="@style/VideoControl.ToolIcon"
+        android:layout_alignParentRight="true"
+        android:clickable="true"
+        android:padding="10dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/vc_tool_fullscreen"
+        />
+
+    <TextView
+        android:id="@+id/vc_total_time_tv"
+        style="@style/VideoControl.TotalTime"
+        android:layout_alignParentBottom="true"
+        android:layout_alignRight="@id/vc_slider"
+        android:layout_marginBottom="5dp"
+        android:text="00:00"/>
+
+    <TextView
+        android:id="@+id/vc_current_time_tv"
+        style="@style/VideoControl.CurrentTime"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/vc_total_time_tv"
+        android:layout_marginBottom="5dp"
+        android:text="00:00/" />
+
+</RelativeLayout>

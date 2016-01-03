@@ -8,24 +8,6 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
 
-    <FrameLayout
-        android:id="@+id/lite_cover_layout"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
-
-        <ImageView
-            android:id="@+id/lite_cover_iv"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:scaleType="centerCrop"/>
-
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:background="#4d000000"/>
-
-    </FrameLayout>
-
     <ImageView
         android:id="@+id/lite_overlay_play_iv"
         android:layout_width="60dp"
@@ -58,7 +40,7 @@
             android:background="@drawable/vc_gradient_btm_bg">
 
             <include
-                layout="@layout/vc_seek_control"/>
+                layout="@layout/vc_seek_control_fullscreen"/>
 
         </RelativeLayout>
 

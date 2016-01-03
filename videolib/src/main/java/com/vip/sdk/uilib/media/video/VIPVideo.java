@@ -47,6 +47,8 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     }
 
     private float mSizeRatio = -1.0f;
+    private Uri mUri;
+    private Map<String, String> mHeaders;
 
     // 防止代码创建对象，并设置Uri的情况
     public VIPVideo(Context context) {
@@ -275,12 +277,23 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         if (!isVideoAdded()) {
             addTinyVideo();
         }
+
+        mUri = uri;
+        mHeaders = headers;
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mVideoView.setVideoURI(uri, headers);
         } else {
             if (DEBUG) Log.d(TAG, "headers are ignoreds");
             mVideoView.setVideoURI(uri);
         }
+    }
+
+    /**
+     * 获取当前设置的uri
+     */
+    public Uri getUri() {
+        return mUri;
     }
 
     /**
