@@ -45,7 +45,7 @@ public class VideoListActivity extends Activity {
     }
 
     public void initView() {
-        mController = new VideoListController(list);
+        mController = new VideoListController(list).flingLoad(false).touchScrollingLoad(false);
 
         list.setOnScrollListener(mController);
 

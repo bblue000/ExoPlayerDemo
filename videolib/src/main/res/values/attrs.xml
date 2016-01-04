@@ -5,5 +5,26 @@
         <!-- 视频宽高比，width:height；例如，宽为200，该值设置为2时，高为100（最好保证宽高中至少一项是绝对数值） -->
         <attr name="sizeRatio" format="float"/>
     </declare-styleable>
-    
+
+    <!-- 仿微信视频加载进度 -->
+    <declare-styleable name="CircleProgressBar">
+        <!-- 未加载进度部分弧形的颜色 -->
+        <attr name="normalSwingColor" format="color|reference"/>
+        <!-- 已加载进度部分弧形的颜色 -->
+        <attr name="progressSwingColor" format="color|reference"/>
+        <!-- 外边缘圆圈与内部圆圈之间的距离 -->
+        <attr name="borderOffset" format="dimension"/>
+        <!-- 外边缘圆圈的粗细 -->
+        <attr name="borderStrokeWidth" format="dimension"/>
+        <!-- 外边缘圆圈的颜色-->
+        <attr name="borderStrokeColor" format="color|reference"/>
+        <!-- 统一设置圆圈的半径，如果无需分别定义normalCircleRadius和processCircleRadius，定义该属性，
+        没有完成的圆圈半径和已完成的圆圈半径一致 -->
+        <attr name="commonCircleRadius" format="dimension"/>
+        <attr name="normalCircleRadius" format="dimension"/>
+        <attr name="progressCircleRadius" format="dimension"/>
+
+        <attr name="android:max"/>
+        <attr name="android:progress"/>
+    </declare-styleable>
 </resources>

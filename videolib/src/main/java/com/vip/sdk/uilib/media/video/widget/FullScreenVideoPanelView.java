@@ -45,7 +45,7 @@ public class FullScreenVideoPanelView extends BaseVideoPanelView<FullScreenVideo
 
     @Override
     protected void initView(Context context) {
-        LayoutInflater.from(context).inflate(R.layout.lite_video_panel, this);
+        LayoutInflater.from(context).inflate(R.layout.lite_video_panel_fullscreen, this);
         mVideo = (VIPVideo) findViewById(R.id.lite_video);
         // overlay
         mOverlayPlayV = findViewById(R.id.lite_overlay_play_iv);
@@ -96,7 +96,7 @@ public class FullScreenVideoPanelView extends BaseVideoPanelView<FullScreenVideo
 
     @Override
     protected boolean isControlBarShowing(FullScreenVideoPanelView parent, VIPVideo video) {
-        return !ViewUtils.isVisible(mSeekControlLayout);
+        return ViewUtils.isVisible(mSeekControlLayout);
     }
 
     @Override

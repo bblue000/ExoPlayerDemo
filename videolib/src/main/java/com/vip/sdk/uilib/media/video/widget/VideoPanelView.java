@@ -56,17 +56,14 @@ public class VideoPanelView extends BaseVideoPanelView<VideoPanelView> {
 
     public VideoPanelView(Context context) {
         super(context);
-        initView(context);
     }
 
     public VideoPanelView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initView(context);
     }
 
     public VideoPanelView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initView(context);
     }
 
     @Override
@@ -176,7 +173,7 @@ public class VideoPanelView extends BaseVideoPanelView<VideoPanelView> {
 
     @Override
     protected boolean isControlBarShowing(VideoPanelView parent, VIPVideo video) {
-        return !ViewUtils.isVisible(mSeekControlLayout);
+        return ViewUtils.isVisible(mSeekControlLayout);
     }
 
     @Override
@@ -209,7 +206,7 @@ public class VideoPanelView extends BaseVideoPanelView<VideoPanelView> {
     }
 
     protected void onFullScreenClicked() {
-        FullScreenVideoActivity.start(getContext(), getVideo().getUri(), true, 0, null);
+        FullScreenVideoActivity.start(getContext(), getVideo().getUri(), true, getVideo().getCurrentPosition());
     }
 
     @Override

@@ -77,9 +77,9 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         if (null == mVideoView) {
             mVideoView = new VideoView(getContext());
             // 这个可以让UI hierarchy截不了屏幕
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                mVideoView.setSecure(true);
-            }
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+//                mVideoView.setSecure(true);
+//            }
             mVideoView.getHolder().addCallback(mSurfaceCallback);
             mVideoView.setBackgroundColor(0); // this is important
         }
@@ -121,7 +121,7 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        removeAllViews(); // 我们不允许有其他的子View存在
+//        removeAllViews(); // 我们不允许有其他的子View存在
     }
 
     @Override

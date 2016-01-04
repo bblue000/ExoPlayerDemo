@@ -4,6 +4,8 @@
     <!-- seek control colors -->
     <color name="vc_current_time_textcolor">#ffeeeef1</color>
     <color name="vc_total_time_textcolor">#ff86878b</color>
+    <color name="lite_loading_progress_color">#ffeeeef1</color>
+    <color name="lite_loading_normal_color">#ff86878b</color>
 
     <dimen name="vc_controlbar_height">45dp</dimen>
     <dimen name="vc_time_label_textsize">11sp</dimen>
@@ -56,10 +58,20 @@
     </style>
     <!-- 视频控制布局的样式 end -->
 
+    <style name="CircleProgressBar">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="commonCircleRadius">25dp</item>
+        <item name="normalSwingColor">@color/lite_loading_normal_color</item>
+        <item name="progressSwingColor">@color/lite_loading_progress_color</item>
+        <item name="borderStrokeColor">@color/lite_loading_progress_color</item>
+        <item name="borderOffset">1dp</item>
+        <item name="borderStrokeWidth">1dp</item>
+        <item name="android:max">100</item>
+    </style>
+
     <!-- full screen activity theme -->
     <style name="FullScreenVideoTheme" parent="@android:style/Theme.NoTitleBar.Fullscreen">
-        <item name="android:screenOrientation">sensorLandscape</item>
-        <item name="android:configChanges">orientation</item>
     </style>
 
 </resources>
