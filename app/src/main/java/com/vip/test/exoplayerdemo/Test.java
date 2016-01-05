@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.RelativeLayout;
 
-import com.vip.sdk.uilib.media.video.controller.SingleVideoController;
-import com.vip.sdk.uilib.media.video.VIPVideo;
+import com.vip.sdk.uilib.video.controller.SingleVideoController;
+import com.vip.sdk.uilib.video.VIPVideo;
 import com.vip.sdk.videolib.demo.MediaListManager;
 
 /**

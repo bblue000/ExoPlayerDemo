@@ -21,12 +21,12 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content">
 
-        <com.vip.sdk.uilib.media.video.VIPVideo
+        <com.vip.sdk.uilib.video.VIPVideo
             android:id="@+id/vv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-        <com.vip.sdk.uilib.media.video.widget.CircleProgressBar
+        <com.vip.sdk.uilib.video.widget.CircleProgressBar
             android:id="@+id/pb"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video.widget;
+package com.vip.sdk.uilib.video.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -10,7 +10,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.vip.sdk.base.utils.ViewUtils;
-import com.vip.sdk.uilib.media.video.VIPVideo;
+import com.vip.sdk.uilib.video.VIPVideo;
 import com.vip.sdk.uilib.video.R;
 
 /**

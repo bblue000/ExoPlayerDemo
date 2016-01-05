@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video.cache;
+package com.vip.sdk.uilib.video.cache;
 
 import android.content.Context;
 import android.net.Uri;
@@ -10,9 +10,9 @@ import com.androidquery.callback.AjaxStatus;
 import com.androidquery.util.AQUtility;
 import com.vip.sdk.base.file.FileManagerUtils;
 import com.vip.sdk.base.utils.ObjectUtils;
-import com.vip.sdk.uilib.media.video.VIPVideoDebug;
-import com.vip.sdk.uilib.media.video.VIPVideoToken;
-import com.vip.sdk.uilib.media.video.VideoControlCallback;
+import com.vip.sdk.uilib.video.VIPVideoDebug;
+import com.vip.sdk.uilib.video.VIPVideoToken;
+import com.vip.sdk.uilib.video.VideoControlCallback;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;

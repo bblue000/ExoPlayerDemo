@@ -9,9 +9,9 @@ import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.facebook.drawee.view.SimpleDraweeView;
-import com.vip.sdk.uilib.media.video.controller.VideoListController;
-import com.vip.sdk.uilib.media.video.VIPVideo;
-import com.vip.sdk.uilib.media.video.widget.VideoPanelView;
+import com.vip.sdk.uilib.video.controller.VideoListController;
+import com.vip.sdk.uilib.video.VIPVideo;
+import com.vip.sdk.uilib.video.widget.VideoPanelView;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 

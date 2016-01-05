@@ -1,10 +1,10 @@
-package com.vip.sdk.uilib.media.video.autoplay;
+package com.vip.sdk.uilib.video.autoplay;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import com.vip.sdk.uilib.media.video.VIPVideo;
+import com.vip.sdk.uilib.video.VIPVideo;
 
 /**
  *

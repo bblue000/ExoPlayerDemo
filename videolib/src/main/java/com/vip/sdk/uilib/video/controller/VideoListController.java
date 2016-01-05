@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video.controller;
+package com.vip.sdk.uilib.video.controller;
 
 import android.util.Log;
 import android.view.View;
@@ -6,10 +6,10 @@ import android.widget.AbsListView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import com.vip.sdk.uilib.media.video.VIPVideo;
-import com.vip.sdk.uilib.media.video.VIPVideoDebug;
-import com.vip.sdk.uilib.media.video.VIPVideoToken;
-import com.vip.sdk.uilib.media.video.VideoController;
+import com.vip.sdk.uilib.video.VIPVideo;
+import com.vip.sdk.uilib.video.VIPVideoDebug;
+import com.vip.sdk.uilib.video.VIPVideoToken;
+import com.vip.sdk.uilib.video.VideoController;
 
 /**
  * Created by Yin Yong on 15/12/28.
@@ -23,7 +23,7 @@ public class VideoListController extends VideoController implements AbsListView.
      */
     public interface VideoListCallback {
         /**
-         * 如果不是含有视频的项，返回null；如果是含有视频的项，则返回{@link com.vip.sdk.uilib.media.video.VIPVideo}
+         * 如果不是含有视频的项，返回null；如果是含有视频的项，则返回{@link VIPVideo}
          */
         VIPVideo getVIPVideo(int position, View convertView);
     }

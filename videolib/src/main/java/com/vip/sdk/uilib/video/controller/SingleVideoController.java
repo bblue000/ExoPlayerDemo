@@ -1,11 +1,11 @@
-package com.vip.sdk.uilib.media.video.controller;
+package com.vip.sdk.uilib.video.controller;
 
 import android.net.Uri;
 import android.view.View;
 
-import com.vip.sdk.uilib.media.video.VIPVideo;
-import com.vip.sdk.uilib.media.video.VideoControlCallback;
-import com.vip.sdk.uilib.media.video.VideoController;
+import com.vip.sdk.uilib.video.VIPVideo;
+import com.vip.sdk.uilib.video.VideoControlCallback;
+import com.vip.sdk.uilib.video.VideoController;
 
 import java.util.Map;
 
@@ -16,7 +16,7 @@ import java.util.Map;
  * <br/>
  *
  * 创建对象时已经传入了管理的视频对象，所以提供了一些简洁方法（如{@link #start()}等），
- * 调用处无需重复传入{@link com.vip.sdk.uilib.media.video.VIPVideo}
+ * 调用处无需重复传入{@link VIPVideo}
  *
  * Created by Yin Yong on 15/12/27.
  */

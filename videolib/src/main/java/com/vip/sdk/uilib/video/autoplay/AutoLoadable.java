@@ -1,6 +1,6 @@
-package com.vip.sdk.uilib.media.video.autoplay;
+package com.vip.sdk.uilib.video.autoplay;
 
-import com.vip.sdk.uilib.media.video.VIPVideo;
+import com.vip.sdk.uilib.video.VIPVideo;
 
 /**
  *

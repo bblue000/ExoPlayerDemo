@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 
-import com.vip.sdk.uilib.media.video.widget.CircleProgressBar;
+import com.vip.sdk.uilib.video.widget.CircleProgressBar;
 
 /**
  * something
@@ -31,8 +31,8 @@ public class TestCircleProgressBar extends Activity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                progressBar.smoothSetProgress(progress += 5);
-                handler.postDelayed(this, 1000);
+                progressBar.smoothSetProgress(progress += 100);
+                handler.postDelayed(this, 200);
             }
         }, 1000);
     }

@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.widget.ListView;
 
-import com.vip.sdk.uilib.media.video.controller.VideoListController;
+import com.vip.sdk.uilib.video.controller.VideoListController;
 import com.vip.sdk.videolib.demo.entity.MediaListInfo;
 import com.vip.test.exoplayerdemo.R;
 

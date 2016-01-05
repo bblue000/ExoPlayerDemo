@@ -1,10 +1,10 @@
-package com.vip.sdk.uilib.media.video.cache;
+package com.vip.sdk.uilib.video.cache;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 
-import com.vip.sdk.uilib.media.video.VIPVideoToken;
+import com.vip.sdk.uilib.video.VIPVideoToken;
 
 import java.io.File;
 

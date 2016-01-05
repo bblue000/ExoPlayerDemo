@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video.widget;
+package com.vip.sdk.uilib.video.widget;
 
 import android.content.Context;
 import android.net.Uri;
@@ -10,10 +10,9 @@ import android.widget.SeekBar;
 
 import com.androidquery.util.AQUtility;
 import com.vip.sdk.base.utils.ToastUtils;
-import com.vip.sdk.base.utils.ViewUtils;
-import com.vip.sdk.uilib.media.video.VIPVideo;
-import com.vip.sdk.uilib.media.video.VideoControlCallback;
-import com.vip.sdk.uilib.media.video.VideoController;
+import com.vip.sdk.uilib.video.VIPVideo;
+import com.vip.sdk.uilib.video.VideoControlCallback;
+import com.vip.sdk.uilib.video.VideoController;
 
 /**
  * Created by Yin Yong on 16/1/2.
@@ -53,7 +52,7 @@ public abstract class BaseVideoPanelView<VideoPanelView extends BaseVideoPanelVi
     protected abstract void initView(Context context) ;
 
     /**
-     * 获得布局中的{@link com.vip.sdk.uilib.media.video.VIPVideo}
+     * 获得布局中的{@link VIPVideo}
      */
     public abstract VIPVideo getVideo() ;
 

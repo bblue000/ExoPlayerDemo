@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video.widget;
+package com.vip.sdk.uilib.video.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -15,8 +15,8 @@ import android.widget.TextView;
 
 import com.androidquery.AQuery;
 import com.vip.sdk.base.utils.ViewUtils;
-import com.vip.sdk.uilib.media.video.VIPVideo;
-import com.vip.sdk.uilib.media.video.VideoController;
+import com.vip.sdk.uilib.video.VIPVideo;
+import com.vip.sdk.uilib.video.VideoController;
 import com.vip.sdk.uilib.video.R;
 
 /**

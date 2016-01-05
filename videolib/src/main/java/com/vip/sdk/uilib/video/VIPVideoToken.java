@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video;
+package com.vip.sdk.uilib.video;
 
 import android.net.Uri;
 
@@ -7,8 +7,8 @@ import com.vip.sdk.base.utils.ObjectUtils;
 import java.util.Map;
 
 /**
- * 封装被{@link com.vip.sdk.uilib.media.video.VideoController}管理的视频
- * （{@link com.vip.sdk.uilib.media.video.VIPVideo}）及其资源等信息
+ * 封装被{@link VideoController}管理的视频
+ * （{@link VIPVideo}）及其资源等信息
  *
  *
  * Created by Yin Yong on 15/12/27.

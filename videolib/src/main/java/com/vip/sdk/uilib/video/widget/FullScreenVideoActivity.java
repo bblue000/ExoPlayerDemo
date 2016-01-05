@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video.widget;
+package com.vip.sdk.uilib.video.widget;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,7 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-import com.vip.sdk.uilib.media.video.controller.SimpleVideoController;
+import com.vip.sdk.uilib.video.controller.SimpleVideoController;
 import com.vip.sdk.uilib.video.R;
 
 /**

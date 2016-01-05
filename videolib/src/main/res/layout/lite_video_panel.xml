@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <com.vip.sdk.uilib.media.video.VIPVideo
+    <com.vip.sdk.uilib.video.VIPVideo
         android:id="@+id/lite_video"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>

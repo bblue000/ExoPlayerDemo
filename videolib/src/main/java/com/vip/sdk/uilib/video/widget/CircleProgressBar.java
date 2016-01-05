@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video.widget;
+package com.vip.sdk.uilib.video.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -210,7 +210,7 @@ public class CircleProgressBar extends View {
     }
 
     /**
-     * 设置当前进度
+     * Smoothly set progress
      */
     public void smoothSetProgress(int progress) {
         progress = Math.max(0, progress);
@@ -218,7 +218,11 @@ public class CircleProgressBar extends View {
         mScroller.abortAnimation();
         if (progress != mProgress) {
             mTargetProgress = progress;
-            mScroller.startScroll(mProgress, 0, mTargetProgress - mProgress, 0, 300);
+//            float percent = (float) Math.abs(mTargetProgress - mProgress) / (float) mMaxProgress;
+//            float percentAngle = percent * 360;
+//            int timeInMillis = (int) (percentAngle * 10);
+            int timeInMillis = 300; // 使用常量
+            mScroller.startScroll(mProgress, 0, mTargetProgress - mProgress, 0, (int) timeInMillis);
             invalidate();
         } else {
             setProgress(progress);

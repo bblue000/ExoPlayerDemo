@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video;
+package com.vip.sdk.uilib.video;
 
 import android.net.Uri;
 

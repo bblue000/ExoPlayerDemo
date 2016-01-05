@@ -5,12 +5,12 @@
     android:layout_height="200dp"
     android:background="@android:color/black">
 
-    <com.vip.sdk.uilib.media.video.widget.VideoPanelView
+    <com.vip.sdk.uilib.video.widget.VideoPanelView
         android:id="@+id/video"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
 
-    </com.vip.sdk.uilib.media.video.widget.VideoPanelView>
+    </com.vip.sdk.uilib.video.widget.VideoPanelView>
 
     <RelativeLayout
         android:layout_width="fill_parent"

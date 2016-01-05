@@ -1,10 +1,10 @@
-package com.vip.sdk.uilib.media.video.cache;
+package com.vip.sdk.uilib.video.cache;
 
 import android.content.Context;
 import android.net.Uri;
 
-import com.vip.sdk.uilib.media.video.VIPVideoToken;
-import com.vip.sdk.uilib.media.video.VideoControlCallback;
+import com.vip.sdk.uilib.video.VIPVideoToken;
+import com.vip.sdk.uilib.video.VideoControlCallback;
 
 import java.io.File;
 
@@ -69,7 +69,7 @@ public interface VideoCache {
     }
 
     /**
-     * {@link com.vip.sdk.uilib.media.video.cache.VideoCache.CacheCallback}的缺省实现——所有方法都是默认空实现
+     * {@link com.vip.sdk.uilib.video.cache.VideoCache.CacheCallback}的缺省实现——所有方法都是默认空实现
      */
     class SimpleCacheCallback implements CacheCallback {
         @Override public void onCacheProgress(VIPVideoToken token, String uri, long current, long total) { }

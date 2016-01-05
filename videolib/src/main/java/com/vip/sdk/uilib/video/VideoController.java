@@ -1,9 +1,10 @@
-package com.vip.sdk.uilib.media.video;
+package com.vip.sdk.uilib.video;
 
 import android.app.Activity;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -13,10 +14,10 @@ import android.view.ViewParent;
 
 import com.vip.sdk.base.utils.AndroidUtils;
 import com.vip.sdk.base.utils.ObjectUtils;
-import com.vip.sdk.uilib.media.video.autoplay.AutoLoadable;
-import com.vip.sdk.uilib.media.video.autoplay.NetDependStrategy;
-import com.vip.sdk.uilib.media.video.cache.SimpleVideoCache;
-import com.vip.sdk.uilib.media.video.cache.VideoCache;
+import com.vip.sdk.uilib.video.autoplay.AutoLoadable;
+import com.vip.sdk.uilib.video.autoplay.NetDependStrategy;
+import com.vip.sdk.uilib.video.cache.SimpleVideoCache;
+import com.vip.sdk.uilib.video.cache.VideoCache;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -32,14 +33,26 @@ import java.util.WeakHashMap;
  * 视频播放的控件（{@link VIPVideo}）本身是可以独立使用的，使用控制器，
  * 能够从界面流/布局的角度来控制视频控件的播放顺序、播放-停止状态的切换等。
  *
+ * the {@link VIPVideo} can use without any controller;
+ * but with a derived controller, we can define how videos play in our designed order,
+ * or switch play-pause state, etc.
+ *
  * <p/>
  *
  * 如果需要在当前界面进入后台时保存状态，可以调用{@link #pauseControl()}；
  * 在重新进入前台时恢复状态，可以调用{@link #resumeControl()}。
  *
- * 主要过程：
- * set uri---try download---(download success)--set uri to video---(when prepared)---try start
- * --->play video
+ * <p/>
+ *
+ * 视频缓存加载到播放的主要过程(main process from loading cache to playing)：
+ * <pre>
+ * set uri(with {@link #setVideoPath}, {@link #setVideoURI)
+ * ---try load cache
+ *        ---(load success)--->set uri to video
+ *                                 ---(when prepared)--->try start--->play video
+ *                                 ---(fail loading data, unsupported video, etc.)--->post failed message
+ *        ---(load failed)--->post failed message
+ * </pre>
  *
  * <p/>
  * Created by Yin Yong on 15/12/25.
@@ -346,7 +359,7 @@ public abstract class VideoController implements VideoWidgetDelegate {
      * @param force 如果视频资源尚未加载成功，是否强制加载（即使{@link #getAutoPlayStrategy()#autoLoad(VIPVideo)}返回false）
      *
      * @return 返回true表明需要下载，后续将会通过{@link #onVideoDownloaded(VIPVideoToken, String, android.net.Uri)}
-     * 或者{@link #onVideoLoadFailed(VIPVideoToken, String, VideoControlCallback.VideoStatus)}
+     * 或者{@link #onVideoCacheFailed(VIPVideoToken, String, VideoControlCallback.VideoStatus)}
      * 等相关方法返回结果。
      */
     protected boolean dispatchDownload(VIPVideoToken token, boolean force) {
@@ -444,6 +457,13 @@ public abstract class VideoController implements VideoWidgetDelegate {
     // =============================================
     // 下载的统一管理
     // =============================================
+    protected void onVideoCacheProgress(VIPVideoToken token, String uri, long current, long total) {
+        if (mPlaying.match(token, uri) && null == mPlaying.token.playUri) {
+            if (DEBUG) Log.d(TAG, "onVideoCacheProgress");
+            postCacheProgress(token, uri, current, total);
+        }
+    }
+
     /**
      * 视频缓存好时调用
      */
@@ -460,10 +480,10 @@ public abstract class VideoController implements VideoWidgetDelegate {
     /**
      * 视频缓存出错时调用
      */
-    protected void onVideoLoadFailed(VIPVideoToken token, String uri, VideoControlCallback.VideoStatus status) {
+    protected void onVideoCacheFailed(VIPVideoToken token, String uri, VideoControlCallback.VideoStatus status) {
         if (mPlaying.match(token, uri) && null == mPlaying.token.playUri) {
             // 如果是当前播放项没有改变起始的URL，且没有下载完成（playUri is null）
-            if (DEBUG) Log.e(TAG, "onVideoLoadFailed");
+            if (DEBUG) Log.e(TAG, "onVideoCacheFailed");
             // send message
             postState(VideoControlCallback.STATE_LOAD_ERR, token, status);
         }
@@ -473,19 +493,19 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
         @Override
         public void onCacheProgress(VIPVideoToken token, String uri, long current, long total) {
-            // do nothing here
+            onVideoCacheProgress(token, uri, current, total);
         }
 
         @Override
         public void onCacheSuccess(VIPVideoToken token, String uri, Uri target) {
-            if (DEBUG) Log.d(TAG, uri.substring(uri.lastIndexOf("/") + 1) + "下载好了");
+            if (DEBUG) Log.d(TAG, uri.substring(uri.lastIndexOf("/") + 1) + " downloaded ");
             onVideoDownloaded(token, uri, target);
         }
 
         @Override
         public void onCacheFailed(VIPVideoToken token, String uri, VideoControlCallback.VideoStatus status) {
-            if (DEBUG) Log.d(TAG, uri.substring(uri.lastIndexOf("/") + 1) + "下载失败了");
-            onVideoLoadFailed(token, uri, status);
+            if (DEBUG) Log.d(TAG, uri.substring(uri.lastIndexOf("/") + 1) + " download failed");
+            onVideoCacheFailed(token, uri, status);
         }
 
     };
@@ -535,6 +555,21 @@ public abstract class VideoController implements VideoWidgetDelegate {
         }
     }
 
+    protected void postCacheProgress(VIPVideoToken token, String uri, long current, long total) {
+        Message msg = Message.obtain(mHandler, MSG_CACHE_PROGRESS, token);
+        Bundle data = new Bundle(3);
+        data.putString(DATA_URI, uri);
+        data.putLong(DATA_CURRENT_SIZE, current);
+        data.putLong(DATA_TOTAL_SIZE, total);
+        msg.setData(data);
+        if (AndroidUtils.isMainThread()) {
+            mHandler.handleMessage(msg);
+            msg.recycle();
+        } else {
+            msg.sendToTarget();
+        }
+    }
+
     private class MergeToken {
         public final VIPVideoToken target;
         public final VideoControlCallback.VideoStatus param;
@@ -547,11 +582,15 @@ public abstract class VideoController implements VideoWidgetDelegate {
 
     private final int MSG_DELAY_PLAY = -1;
     private final int MSG_STATE = 0;
+    private final int MSG_CACHE_PROGRESS = 1;
+    private final String DATA_URI = "uri";
+    private final String DATA_CURRENT_SIZE = "current";
+    private final String DATA_TOTAL_SIZE = "total";
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MSG_STATE:
+                case MSG_STATE: {
                     VIPVideoToken token;
                     VideoControlCallback.VideoStatus status = null;
                     if (msg.obj instanceof MergeToken) {
@@ -565,6 +604,16 @@ public abstract class VideoController implements VideoWidgetDelegate {
                     if (null != controlCallback) {
                         controlCallback.onStateChanged(token.video, msg.arg1, status);
                     }
+                }
+                    break;
+                case MSG_CACHE_PROGRESS: {
+                    VIPVideoToken token = (VIPVideoToken) msg.obj;
+                    final VideoControlCallback controlCallback = token.stateCb;
+                    if (null != controlCallback) {
+                        controlCallback.onLoadProgress(token.video, msg.getData().getString(DATA_URI),
+                                msg.getData().getLong(DATA_CURRENT_SIZE), msg.getData().getLong(DATA_TOTAL_SIZE));
+                    }
+                }
                     break;
                 case MSG_DELAY_PLAY:
                     playCurrentDelayed((VIPVideoToken) msg.obj);

@@ -5,7 +5,7 @@
 
     <application >
 
-        <activity android:name="com.vip.sdk.uilib.media.video.widget.FullScreenVideoActivity"
+        <activity android:name=".widget.FullScreenVideoActivity"
             android:theme="@style/FullScreenVideoTheme"
             android:screenOrientation="landscape"
             android:configChanges="orientation"/>

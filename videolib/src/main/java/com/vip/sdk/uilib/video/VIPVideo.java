@@ -1,4 +1,4 @@
-package com.vip.sdk.uilib.media.video;
+package com.vip.sdk.uilib.video;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -12,8 +12,6 @@ import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
-
-import com.vip.sdk.uilib.video.R;
 
 import java.util.Map;
 
@@ -77,9 +75,9 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
         if (null == mVideoView) {
             mVideoView = new VideoView(getContext());
             // 这个可以让UI hierarchy截不了屏幕
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-//                mVideoView.setSecure(true);
-//            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                mVideoView.setSecure(true);
+            }
             mVideoView.getHolder().addCallback(mSurfaceCallback);
             mVideoView.setBackgroundColor(0); // this is important
         }
@@ -360,13 +358,13 @@ public class VIPVideo extends RelativeLayout implements VideoWidget {
     private OnPreparedListener mInnerAPIOnPreparedListener;
     private OnCompletionListener mInnerAPIOnCompletionListener;
     private OnErrorListener mInnerAPIOnErrorListener;
-    protected void setInnerAPIOnPreparedListener(OnPreparedListener l) {
+    /*package*/ void setInnerAPIOnPreparedListener(OnPreparedListener l) {
         mInnerAPIOnPreparedListener = l;
     }
-    protected void setInnerAPIOnCompletionListener(OnCompletionListener l) {
+    /*package*/ void setInnerAPIOnCompletionListener(OnCompletionListener l) {
         mInnerAPIOnCompletionListener = l;
     }
-    protected void setInnerAPIOnErrorListener(OnErrorListener l) {
+    /*package*/ void setInnerAPIOnErrorListener(OnErrorListener l) {
         mInnerAPIOnErrorListener = l;
     }
 
