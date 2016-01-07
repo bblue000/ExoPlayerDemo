@@ -1,10 +1,15 @@
 package com.vip.test.exoplayerdemo;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.style.DrawableMarginSpan;
+import android.text.style.ImageSpan;
 import android.util.Log;
 import android.widget.EditText;
 
@@ -26,6 +31,9 @@ public class EditTextDemo extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.et_demo);
+
+        mNumber_ET = (EditText) findViewById(R.id.et);
 
         mNumber_ET.addTextChangedListener(new TextWatcher() {
 
@@ -33,7 +41,7 @@ public class EditTextDemo extends Activity {
             StringBuilder mTempFilterBuffer = new StringBuilder(20);
             int beforeChangedLength; // 改变之前的字符长度
             int changeStart; // 该位置之前的不需要处理
-            int changeEnd; //
+            int changeEnd; // 改变的末尾位置，一般是光标所在位置
             int afterChangedLength; // 改变之后的字符长度
 
             @Override
@@ -55,80 +63,52 @@ public class EditTextDemo extends Activity {
             @Override
             public void afterTextChanged(Editable s) {
                 formatCardNumber();
-                // 其他根据状态进行处理
-                if (TextUtils.isEmpty(mNumber_ET.getText())) {
-                    ViewUtils.setViewInvisible(mClearNumber_V);
-                } else {
-                    ViewUtils.setViewVisible(mClearNumber_V);
-                }
-                checkSubmitEnabled();
             }
 
             protected void formatCardNumber() {
-                if (mTempFilterBuffer.length() > 0) {
-                    mTempFilterBuffer.delete(0, mTempFilterBuffer.length());
-                }
-                if (changeStart == changeEnd) return; // 可以理解为删除字符
+                if (mTempFilterBuffer.length() > 0) mTempFilterBuffer.delete(0, mTempFilterBuffer.length());
 
+                // 1234 5678 9012 3456 789
+                if (changeStart == changeEnd && afterChangedLength <= changeStart + 1) return; // 可以理解为删除字符
+
+                final CharSequence input = mNumber_ET.getText();
                 boolean changed = false;
                 int selection = changeEnd;
-                CharSequence input = mNumber_ET.getText();
 
                 mTempFilterBuffer.append(input.subSequence(0, changeStart));
-                // 先处理从开始位置到第一个空格位置之间的
-                // 1234 5678 9012 3456
-                int anchor = changeStart, locIndex = changeStart % 5;
-                char c;
-                while (locIndex < 4) { // 一直填充到空格位置
-                    if (input.length() <= anchor + 1) {
+                int anchor = changeStart, locIndex = anchor % 5;
+                while (true) {
+                    boolean needChangeSelection = anchor < changeEnd;
+                    if (afterChangedLength <= anchor) { // 到末尾了
+                        if (locIndex == 4) { // 如果是第四位数字，直接给它加上一个空格
+                            changed = true;
+                            if (needChangeSelection) selection ++;
+                            mTempFilterBuffer.append(SPACE);
+                        }
                         checkChanged(changed, selection);
                         return;
                     }
-
-                    c = input.charAt(anchor);
-                    if (c == SPACE) { // 不应该存在空格
-                        selection --;
-                        changed = true;
-                    } else {
+                    char c = input.charAt(anchor);
+                    if (locIndex < 4) { // 如果是0-3
+                        if (c != SPACE) {
+                            mTempFilterBuffer.append(c);
+                            locIndex ++;
+                        } else { // 如果是空格，忽略不计
+                            changed = true;
+                            if (needChangeSelection) selection --;
+                        }
+                    } else if (locIndex == 4) {
+                        locIndex = 0;
+                        if (c != SPACE) {
+                            changed = true;
+                            if (needChangeSelection) selection ++;
+                            mTempFilterBuffer.append(SPACE);
+                            locIndex = 1;
+                        }
                         mTempFilterBuffer.append(c);
-                        locIndex++;
                     }
                     anchor++;
                 }
-
-                if (locIndex >= 3) { // 这个位置之后应该是空格项
-                    mTempFilterBuffer.append(SPACE);
-                    selection ++;
-                }
-
-                c = input.charAt(anchor);
-                if (c != SPACE) {
-                    mTempFilterBuffer.append(SPACE);
-                    mTempFilterBuffer.append(input.charAt(changeStart));
-                    selection ++;
-                }
-//
-//                int selection = changeEnd;
-//                mTempFilterBuffer.append(input.subSequence(0, changeStart));
-//
-//                // 先处理开始位置，到第一个空格位置
-//                int changeStartLoc = changeStart % 5;
-//                char c = input.charAt(changeStartLoc);
-//                if (changeStartLoc == 4) { // 如果是空格项
-//                    if (input.charAt(changeStartLoc) != ' ') {
-//                        mTempFilterBuffer.append(' ');
-//                        mTempFilterBuffer.append(input.charAt(changeStart));
-//                        selection ++;
-//                    }
-//                }
-//                tranform();
-//                for (int i = 0; i < afterChangedLength; i++) {
-//                    if () {
-//
-//                    }
-//                }
-//
-//                mNumber_ET.setSelection(selection);
             }
 
             protected void checkChanged(boolean changed, int selection) {
@@ -137,23 +117,6 @@ public class EditTextDemo extends Activity {
                     mNumber_ET.setText(mTempFilterBuffer);
                     mNumber_ET.setSelection(selection);
                     mNumber_ET.addTextChangedListener(this);
-                }
-            }
-
-            protected void transform(CharSequence input, int anchor, int locIndex, int to) {
-                char c;
-                while (locIndex != 4) { // 一直填充到空格位置
-                    if (input.length() <= anchor + 1) { // 如果长度不够了，直接return
-                        break;
-                    }
-                    c = input.charAt(anchor);
-                    if (c == SPACE) { // 不应该存在空格
-                        selection --;
-                    } else {
-                        mTempFilterBuffer.append(c);
-                    }
-                    anchor++;
-                    locIndex++;
                 }
             }
         });
