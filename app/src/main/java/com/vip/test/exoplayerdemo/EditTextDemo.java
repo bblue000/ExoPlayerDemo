@@ -69,7 +69,7 @@ public class EditTextDemo extends Activity {
                 if (mTempFilterBuffer.length() > 0) mTempFilterBuffer.delete(0, mTempFilterBuffer.length());
 
                 // 1234 5678 9012 3456 789
-                if (changeStart == changeEnd && afterChangedLength <= changeStart + 1) return; // 可以理解为删除字符
+                if (changeStart == changeEnd && afterChangedLength <= changeStart + 1) return; // 可以理解为从尾部删除字符
 
                 final CharSequence input = mNumber_ET.getText();
                 boolean changed = false;
@@ -78,7 +78,7 @@ public class EditTextDemo extends Activity {
                 mTempFilterBuffer.append(input.subSequence(0, changeStart));
                 int anchor = changeStart, locIndex = anchor % 5;
                 while (true) {
-                    boolean needChangeSelection = anchor < changeEnd;
+                    boolean needChangeSelection = anchor < changeEnd || afterChangedLength == changeEnd;
                     if (afterChangedLength <= anchor) { // 到末尾了
                         if (locIndex == 4) { // 如果是第四位数字，直接给它加上一个空格
                             changed = true;
